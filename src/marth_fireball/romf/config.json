@@ -1,0 +1,22 @@
+{
+    "new_dir_files": {
+        "fighter/marth/cmn": [
+            "effect/fighter/marth/transplant/mario/ef_mario.eff"
+        ],
+        "fighter/marth/c00": [
+            "fighter/marth/model/fireball/c00/dark_model.numatb",
+            "fighter/marth/model/fireball/c00/light_model.numatb",
+            "fighter/marth/model/fireball/c00/metamon_model.numatb",
+            "fighter/marth/model/fireball/c00/model.nuanmb",
+            "fighter/marth/model/fireball/c00/model.nuhlpb",
+            "fighter/marth/model/fireball/c00/model.numatb",
+            "fighter/marth/model/fireball/c00/model.numdlb",
+            "fighter/marth/model/fireball/c00/model.nusktb",
+            "fighter/marth/model/fireball/c00/model.nusrcmdlb",
+            "fighter/marth/model/fireball/c00/model.xmb",
+            "fighter/marth/motion/fireball/c00/motion_list.bin",
+            "fighter/marth/motion/fireball/c00/main.nuamb",
+            "fighter/marth/motion/fireball/c00/update.prc"
+        ]
+    }
+}
