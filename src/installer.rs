@@ -1,3 +1,3 @@
 pub fn install() {
-    crate::marth_fireball::install();
+    crate::arm_reflect::install();
 }

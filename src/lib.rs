@@ -24,6 +24,7 @@ use smashline::*;
 
 mod air_smash;
 mod marth_fireball;
+mod arm_reflect;
 
 mod installer;
 mod imports;
