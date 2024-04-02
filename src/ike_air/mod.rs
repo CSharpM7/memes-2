@@ -2,8 +2,8 @@
 Arms Reflect
 */
 
-mod tantan;
+mod ike;
 
 pub fn install() {
-    tantan::install();
+    ike::install();
 }

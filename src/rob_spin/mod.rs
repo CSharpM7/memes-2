@@ -2,8 +2,8 @@
 Arms Reflect
 */
 
-mod tantan;
+mod robot;
 
 pub fn install() {
-    tantan::install();
+    robot::install();
 }

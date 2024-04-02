@@ -22,9 +22,11 @@ use smash::{
 };
 use smashline::*;
 
-mod air_smash;
-mod marth_fireball;
-mod arm_reflect;
+//mod air_smash;
+//mod marth_fireball;
+//mod arm_reflect;
+//mod rob_spin;
+mod ike_air;
 
 mod installer;
 mod imports;
@@ -32,7 +34,11 @@ use crate::imports::imports_agent::*;
 
 #[skyline::main(name = "smashline2_memes")]
 pub fn main() {
-    println!("[smashline2_memes::main] Loading");
+    #[cfg(feature = "devhook")]
+    return;
+
+    #[cfg(not(feature = "dev"))]
     installer::install();
-    println!("[smashline2_memes::main] Loaded!");
+    #[cfg(feature = "dev")]
+    installer::smashline_install();
 }
