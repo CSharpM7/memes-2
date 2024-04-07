@@ -24,6 +24,6 @@ unsafe extern "C" fn effect_regular(agent: &mut L2CAgentBase) {
 pub fn install() {   
     Agent::new("kirby_fireball")
         .game_acmd("game_regular", game_regular)
-        //.acmd("effect_regular", effect_regular)
+        .acmd("effect_regular", effect_regular)
         .install();
 }

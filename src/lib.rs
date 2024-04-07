@@ -34,9 +34,6 @@ use crate::imports::imports_agent::*;
 
 #[skyline::main(name = "smashline2_memes")]
 pub fn main() {
-    #[cfg(feature = "devhook")]
-    return;
-
     #[cfg(not(feature = "dev"))]
     installer::install();
     #[cfg(feature = "dev")]
