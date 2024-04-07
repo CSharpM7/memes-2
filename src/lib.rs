@@ -34,8 +34,6 @@ use crate::imports::imports_agent::*;
 
 #[skyline::main(name = "smashline2_memes")]
 pub fn main() {
-    smashline::clone_weapon("mario", "fireball", "marth", "fireball",true);
-    smashline::clone_weapon("mario", "fireball", "kirby", "fireball",true);
     #[cfg(feature = "devhook")]
     return;
 
