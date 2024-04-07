@@ -1,7 +1,7 @@
-mod special_n;
+mod attack_air_n;
 mod fireball;
 
 pub fn install() {
-    special_n::install();
+    attack_air_n::install();
     fireball::install();
 }

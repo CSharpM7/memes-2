@@ -23,7 +23,7 @@ use smash::{
 use smashline::*;
 
 //mod air_smash;
-//mod marth_fireball;
+mod marth_fireball;
 //mod arm_reflect;
 //mod rob_spin;
 mod ike_air;
@@ -34,6 +34,8 @@ use crate::imports::imports_agent::*;
 
 #[skyline::main(name = "smashline2_memes")]
 pub fn main() {
+    smashline::clone_weapon("mario", "fireball", "marth", "fireball",true);
+    smashline::clone_weapon("mario", "fireball", "kirby", "fireball",true);
     #[cfg(feature = "devhook")]
     return;
 

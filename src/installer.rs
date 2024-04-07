@@ -5,5 +5,5 @@ pub fn smashline_install() {
 }
 
 pub fn install() {
-    crate::ike_air::install();
+    crate::marth_fireball::install();
 }

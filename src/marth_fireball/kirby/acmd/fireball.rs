@@ -17,9 +17,13 @@ unsafe extern "C" fn game_regular(agent: &mut L2CAgentBase) {
     }
 }
 
+unsafe extern "C" fn effect_regular(agent: &mut L2CAgentBase) {
+    macros::EFFECT_FOLLOW(agent, Hash40::new("sys_shield"), Hash40::new("rot"), 0, 1.8, 0, 0, 0, 0, 1, true);
+}
 
 pub fn install() {   
-    Agent::new("marth_fireball")
+    Agent::new("kirby_fireball")
         .game_acmd("game_regular", game_regular)
+        //.acmd("effect_regular", effect_regular)
         .install();
 }

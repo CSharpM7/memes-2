@@ -17,6 +17,24 @@
             "fighter/marth/motion/fireball/c00/motion_list.bin",
             "fighter/marth/motion/fireball/c00/main.nuamb",
             "fighter/marth/motion/fireball/c00/update.prc"
+        ],
+        "fighter/kirby/cmn": [
+            "effect/fighter/kirby/transplant/mario/ef_mario.eff"
+        ],
+        "fighter/kirby/c00": [
+            "fighter/kirby/model/fireball/c00/dark_model.numatb",
+            "fighter/kirby/model/fireball/c00/light_model.numatb",
+            "fighter/kirby/model/fireball/c00/metamon_model.numatb",
+            "fighter/kirby/model/fireball/c00/model.nuanmb",
+            "fighter/kirby/model/fireball/c00/model.nuhlpb",
+            "fighter/kirby/model/fireball/c00/model.numatb",
+            "fighter/kirby/model/fireball/c00/model.numdlb",
+            "fighter/kirby/model/fireball/c00/model.nusktb",
+            "fighter/kirby/model/fireball/c00/model.nusrcmdlb",
+            "fighter/kirby/model/fireball/c00/model.xmb",
+            "fighter/kirby/motion/fireball/c00/motion_list.bin",
+            "fighter/kirby/motion/fireball/c00/main.nuamb",
+            "fighter/kirby/motion/fireball/c00/update.prc"
         ]
     }
 }
