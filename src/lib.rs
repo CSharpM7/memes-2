@@ -23,19 +23,30 @@ use smash::{
 use smashline::*;
 
 //mod air_smash;
-mod marth_fireball;
+//mod marth_fireball;
 //mod arm_reflect;
 //mod rob_spin;
-mod ike_air;
+//mod ike_air;
+mod nana_rocket;
+//mod temp;
 
-mod installer;
 mod imports;
 use crate::imports::imports_agent::*;
+
+#[no_mangle]
+pub fn smashline_install() {
+    install();
+}
+
+pub fn install() {
+    println!("Loading memes");
+    crate::nana_rocket::install();
+}
 
 #[skyline::main(name = "smashline2_memes")]
 pub fn main() {
     #[cfg(not(feature = "dev"))]
-    installer::install();
+    install();
     #[cfg(feature = "dev")]
-    installer::smashline_install();
+    smashline_install();
 }

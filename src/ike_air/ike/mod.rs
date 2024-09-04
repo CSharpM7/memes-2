@@ -30,7 +30,7 @@ unsafe extern "C" fn game_attackairhi(agent: &mut L2CAgentBase) {
         }
         else {
             let air_accel_y = WorkModule::get_param_float(agent.module_accessor, hash40("air_accel_y"), 0);
-            let air_accel_y_stable = WorkModule::get_param_float(agent.module_accessor, hash40("air_accel_y_stable"), 0);
+            let air_speed_y_stable = WorkModule::get_param_float(agent.module_accessor, hash40("air_speed_y_stable"), 0);
             sv_kinetic_energy!(
                 reset_energy,
                 agent,
@@ -52,7 +52,7 @@ unsafe extern "C" fn game_attackairhi(agent: &mut L2CAgentBase) {
                 set_limit_speed,
                 agent,
                 FIGHTER_KINETIC_ENERGY_ID_GRAVITY,
-                air_accel_y_stable*0.425
+                air_speed_y_stable*0.425
             );
         }
         WorkModule::off_flag(agent.module_accessor, *FIGHTER_INSTANCE_WORK_ID_FLAG_NO_SPEED_OPERATION_CHK);
@@ -135,7 +135,7 @@ pub unsafe extern "C" fn ike_update(fighter: &mut L2CFighterCommon) {
             macros::AFTER_IMAGE_OFF(fighter, 2);
             let speed_y = KineticModule::get_sum_speed_y(fighter.module_accessor, *KINETIC_ENERGY_RESERVE_ATTRIBUTE_MAIN) ;
             let air_accel_y = WorkModule::get_param_float(fighter.module_accessor, hash40("air_accel_y"), 0);
-            let air_accel_y_stable = WorkModule::get_param_float(fighter.module_accessor, hash40("air_accel_y_stable"), 0);
+            let air_speed_y_stable = WorkModule::get_param_float(fighter.module_accessor, hash40("air_speed_y_stable"), 0);
             sv_kinetic_energy!(
                 set_accel,
                 fighter,
@@ -153,7 +153,7 @@ pub unsafe extern "C" fn ike_update(fighter: &mut L2CFighterCommon) {
             let speed_y = (0.25 as f32).min(KineticModule::get_sum_speed_y(fighter.module_accessor, *KINETIC_ENERGY_RESERVE_ATTRIBUTE_MAIN));
             if speed_y < 0.0 {
                 let air_accel_y = WorkModule::get_param_float(fighter.module_accessor, hash40("air_accel_y"), 0);
-                let air_accel_y_stable = WorkModule::get_param_float(fighter.module_accessor, hash40("air_accel_y_stable"), 0);
+                let air_speed_y_stable = WorkModule::get_param_float(fighter.module_accessor, hash40("air_speed_y_stable"), 0);
                 sv_kinetic_energy!(
                     set_accel,
                     fighter,
@@ -164,7 +164,7 @@ pub unsafe extern "C" fn ike_update(fighter: &mut L2CFighterCommon) {
                     set_limit_speed,
                     fighter,
                     FIGHTER_KINETIC_ENERGY_ID_GRAVITY,
-                    air_accel_y_stable*0.05
+                    air_speed_y_stable*0.05
                 );
             }
         }
