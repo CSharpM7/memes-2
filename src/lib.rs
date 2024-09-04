@@ -27,7 +27,8 @@ use smashline::*;
 //mod arm_reflect;
 //mod rob_spin;
 //mod ike_air;
-mod nana_rocket;
+//mod nana_rocket;
+mod ledge_special;
 //mod temp;
 
 mod imports;
@@ -40,7 +41,7 @@ pub fn smashline_install() {
 
 pub fn install() {
     println!("Loading memes");
-    crate::nana_rocket::install();
+    crate::ledge_special::install();
 }
 
 #[skyline::main(name = "smashline2_memes")]
