@@ -32,6 +32,7 @@ use smashline::*;
 //mod snake_landmine;
 //mod temp;
 mod metroid_crawl;
+mod hero_skill;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -43,7 +44,7 @@ pub fn smashline_install() {
 
 pub fn install() {
     println!("Loading memes");
-    crate::metroid_crawl::install();
+    crate::hero_skill::install();
 }
 
 #[skyline::main(name = "smashline2_memes")]
