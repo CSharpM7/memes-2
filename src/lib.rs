@@ -28,8 +28,10 @@ use smashline::*;
 //mod rob_spin;
 //mod ike_air;
 //mod nana_rocket;
-mod ledge_special;
+//mod ledge_special;
+//mod snake_landmine;
 //mod temp;
+mod metroid_crawl;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -41,7 +43,7 @@ pub fn smashline_install() {
 
 pub fn install() {
     println!("Loading memes");
-    crate::ledge_special::install();
+    crate::metroid_crawl::install();
 }
 
 #[skyline::main(name = "smashline2_memes")]
