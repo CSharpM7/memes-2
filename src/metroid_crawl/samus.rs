@@ -2,12 +2,32 @@ use super::imports::*;
 use crate::imports::imports_status::*;
 use crate::imports::imports_acmd::*;
 
-pub const FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CRAWL: i32 = 0x21000011;
+pub const FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CRAWL: i32 = 0x21000012;
+pub const FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_FROM_CRAWL: i32 = 0x21000013;
+pub const FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_LOCKOUT: i32 = 0x100000C3;
+pub const FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_SPECIAL_LW_FROM_CRAWL: i32 = 0x200000E5;
+pub const SPECIAL_LW_BOMB_LOCKOUT_FRAME: i32 = 48;
+
+
 /*
 FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_ARTICLE_MOTION_RATE_SYNC: 0x200000E5,
 FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_FINAL_EXEC: 0x200000E0,
 FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_OFF_MAP_COLL_OFFSET: 0x200000E4,
 FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_ST_INIT: 0x200000E1,
+    FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_EFH_CHARGE_MAX: 0x100000BD,
+    FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_FINAL_GUN_ID: 0x100000C1,
+    FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_FINAL_LASER_C: 0x100000C0,
+    FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_FINAL_MOT2ND: 0x100000C2,
+    FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_BODY: 0x100000BF,
+    FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_N_COUNT: 0x100000BE,
+
+    
+    FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CROUCH: 0x2100000F,
+    FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_JUMP: 0x2100000C,
+    FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_MOT_RESTART: 0x21000011,
+    FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_MV: 0x2100000D,
+    FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_MV_CONT: 0x2100000E,
+    FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_WEAPON: 0x21000010,
  */
 pub const FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_CRAWL: i32 = 0x200000E6;
 
@@ -69,9 +89,11 @@ pub unsafe extern "C" fn  game_speciallw(agent: &mut L2CAgentBase) {
         VisibilityModule::set_int64(agent.module_accessor, hash40("body") as i64, hash40("body_sphere") as i64);
         WorkModule::on_flag(agent.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_MV);
     }
-    frame(agent.lua_state_agent, 30.0);
+    frame(agent.lua_state_agent, 40.0);
     if macros::is_excute(agent) {
+        println!("ACMD crawl");
         WorkModule::on_flag(agent.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CRAWL);
+        //WorkModule::on_flag(agent.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CROUCH);
     }
     frame(agent.lua_state_agent, 44.0);
     if macros::is_excute(agent) {
@@ -83,18 +105,24 @@ pub unsafe extern "C" fn  game_speciallw(agent: &mut L2CAgentBase) {
     }
     frame(agent.lua_state_agent, 45.0);
     if macros::is_excute(agent) {
-        WorkModule::on_flag(agent.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CROUCH);
+        //WorkModule::on_flag(agent.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CROUCH);
     }
     macros::FT_MOTION_RATE(agent, 0.6);
 }
-
-pub unsafe extern "C" fn  effect_speciallw(agent: &mut L2CAgentBase) {
+unsafe extern "C" fn effect_speciallw(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 4.0);
     if macros::is_excute(agent) {
-        //macros::LANDING_EFFECT(agent, Hash40::new("sys_down_smoke"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0, false);
+        if !WorkModule::is_flag(agent.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_FROM_CRAWL){
+            macros::LANDING_EFFECT(agent, Hash40::new("sys_down_smoke"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0, false);
+        }
     }
 }
-
+pub unsafe extern "C" fn  game_speciallwend(agent: &mut L2CAgentBase) {
+    frame(agent.lua_state_agent, 9.0);
+    if macros::is_excute(agent) {
+        WorkModule::on_flag(agent.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CROUCH);
+    }
+}
 pub unsafe extern "C" fn  squat_f_main(fighter: &mut L2CFighterCommon) -> L2CValue {
     return squat_main(fighter,true);
 }
@@ -135,6 +163,7 @@ pub unsafe extern "C" fn  squat_wait_main(fighter: &mut L2CFighterCommon) -> L2C
     let prev = StatusModule::prev_status_kind(fighter.module_accessor, 0);
     if ![
         *FIGHTER_STATUS_KIND_SQUAT_F,*FIGHTER_STATUS_KIND_SQUAT_B,
+        *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW,
     *FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP,*FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP_A,*FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP_G
     ].contains(&prev)
     {
@@ -178,39 +207,41 @@ unsafe extern "C" fn squat_exit(fighter: &mut L2CFighterCommon) -> L2CValue {
 }
 
 pub unsafe extern "C" fn  bomb_g_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
-    println!("BombG");
     return morph_force_crawl(fighter);
 }
 
-pub unsafe extern "C" fn  speciallw_main(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let special_lw = smashline::original_status(Main, fighter, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW)(fighter);
-    if ![
-        *FIGHTER_STATUS_KIND_SQUAT_F,*FIGHTER_STATUS_KIND_SQUAT_B,*FIGHTER_STATUS_KIND_SQUAT_WAIT,
-    //*FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP,*FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP_A,*FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP_G
-    ].contains(&prev)
-    {
-    }
-
-}
 pub unsafe extern "C" fn  speciallw_a_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
-    println!("SpecialLwA");
     morph_force_crawl(fighter);
     return 0.into();
 }
 pub unsafe extern "C" fn  speciallw_g_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
-    println!("SpecialLwG");
     morph_force_crawl(fighter);
+    if WorkModule::is_flag(fighter.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_FROM_CRAWL) {
+        WorkModule::off_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_JUMP);
+    }
+    if MotionModule::motion_kind(fighter.module_accessor) == hash40("special_lw_end") {
+        println!("lw end");
+        let cancel_frame = FighterMotionModuleImpl::get_cancel_frame(fighter.module_accessor, Hash40::new("special_lw"), true) as i32;
+        let status_frame = fighter.global_table[STATUS_FRAME].get_i32();
+        if MotionModule::frame(fighter.module_accessor) > 3.0
+        || status_frame >= cancel_frame-1 {
+            println!("Crouch check");
+            fighter.change_status(FIGHTER_STATUS_KIND_SQUAT_WAIT.into(), false.into());
+            //WorkModule::on_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CROUCH);
+        }
+    }
     return smashline::original_status(Exec, fighter, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW)(fighter);
 }
 
 unsafe extern "C" fn morph_force_crawl(fighter: &mut L2CFighterCommon) -> L2CValue {
     let frame = MotionModule::frame(fighter.module_accessor);
-    let crawlcheck = WorkModule::is_flag(fighter.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CRAWL)
-    || (frame >= 30.0 && frame < 31.0);
+    let crawlcheck = WorkModule::is_flag(fighter.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CRAWL);
+    //|| (frame >= 30.0 && frame < 31.0);
     if WorkModule::is_flag(fighter.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CRAWL) {
-        println!("Force flag");
+        //println!("Force flag");
     }
     if crawlcheck {
+        println!("Crawl check");
         WorkModule::off_flag(fighter.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CRAWL);
         let stick_y = ControlModule::get_stick_y(fighter.module_accessor);
         let stick_y_sensitivity = WorkModule::get_param_float(fighter.module_accessor, hash40("param_special_lw"), Hash40::new_raw(0x10d088fec9).hash);
@@ -220,7 +251,12 @@ unsafe extern "C" fn morph_force_crawl(fighter: &mut L2CFighterCommon) -> L2CVal
             //VarModule::set_int(fighter.battle_object, samus::instance::int::BOMB_COOLDOWN, samus::BOMB_COOLDOWN_MAX - (frame as i32));
             //VarModule::on_flag(fighter.battle_object, samus::instance::flag::SPECIAL_LW_CRAWL);
             ControlModule::clear_command(fighter.module_accessor, false);
-            fighter.change_status(FIGHTER_STATUS_KIND_SQUAT_WAIT.into(), false.into());
+            let cancel_frame = FighterMotionModuleImpl::get_cancel_frame(fighter.module_accessor, Hash40::new_raw(MotionModule::motion_kind(fighter.module_accessor)), true);
+            let lock_frame = SPECIAL_LW_BOMB_LOCKOUT_FRAME;//(cancel_frame - MotionModule::frame(fighter.module_accessor)).max(0.0);
+            WorkModule::set_int(fighter.module_accessor, lock_frame, FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_LOCKOUT);
+            println!("Set lock to {lock_frame}");
+            MotionModule::change_motion(fighter.module_accessor, Hash40::new("special_lw_end"), 0.0, 4.0, false, 0.0, false, false);
+            //fighter.change_status(FIGHTER_STATUS_KIND_SQUAT_WAIT.into(), false.into());
         }
     }
     return 0.into();
@@ -257,21 +293,63 @@ pub unsafe extern "C" fn squat_disable_terms(fighter: &mut L2CFighterCommon) {
 }
 
 pub unsafe extern "C" fn check_bomb_input(fighter: &mut L2CFighterCommon) {
-    let can_spawn = true;//VarModule::get_int(fighter.battle_object, samus::instance::int::BOMB_COOLDOWN) <= 0;
+    let can_spawn = WorkModule::get_int(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_LOCKOUT) <= 0;
     if ControlModule::check_button_trigger(fighter.module_accessor, *CONTROL_PAD_BUTTON_ATTACK_RAW)
     || ControlModule::check_button_trigger(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL_RAW) {
-       // let cooldown = VarModule::get_int(fighter.battle_object, samus::instance::int::BOMB_COOLDOWN);
-        let cooldown = 0;
-        println!("Cooldown: {cooldown}");
         ControlModule::clear_command(fighter.module_accessor, false);
         let article = *FIGHTER_SAMUS_GENERATE_ARTICLE_BOMB;
         let maxbomb = WorkModule::get_param_int(fighter.module_accessor, hash40("param_special_lw"),hash40("bomb_max_req"));
         if (ArticleModule::get_active_num(fighter.module_accessor, article) as i32) < maxbomb 
         && can_spawn 
         {
+            println!("Req bomb");
+            WorkModule::on_flag(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_SPECIAL_LW_FROM_CRAWL);
             fighter.change_status(FIGHTER_STATUS_KIND_SPECIAL_LW.into(), false.into());
         }
+        
     }
+}
+
+pub unsafe extern "C" fn  speciallw_g_init(fighter: &mut L2CFighterCommon) -> L2CValue {
+    if WorkModule::is_flag(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_SPECIAL_LW_FROM_CRAWL) {
+        WorkModule::off_flag(fighter.module_accessor, *FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_ST_INIT);
+    }
+    return smashline::original_status(Init, fighter, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW)(fighter);
+}
+pub unsafe extern "C" fn  speciallw_g_main(fighter: &mut L2CFighterCommon) -> L2CValue {
+    println!("Special lw g main");
+    let original = smashline::original_status(Main, fighter, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW)(fighter);
+
+    if WorkModule::is_flag(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_SPECIAL_LW_FROM_CRAWL) {
+        println!("Shortcut");
+        MotionModule::change_motion(fighter.module_accessor, Hash40::new("special_lw"), 0.0, 4.0, false, 0.0, false, false);
+        WorkModule::on_flag(fighter.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_FROM_CRAWL);
+        WorkModule::on_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_MV);
+    }
+    WorkModule::off_flag(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_SPECIAL_LW_FROM_CRAWL);
+    return original;
+}
+
+pub unsafe extern "C" fn samus_update(fighter: &mut L2CFighterCommon) {
+    let boma = fighter.module_accessor;
+    let lockout = WorkModule::get_int(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_LOCKOUT);
+    if lockout > 0 {
+        WorkModule::count_down_int(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_LOCKOUT, 0);
+    }
+}
+
+unsafe extern "C" fn special_lw_callback(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let lockout = WorkModule::get_int(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_LOCKOUT);
+    if lockout > 0 {
+        println!("Locked!");
+        return false.into();
+    }
+    true.into()
+}
+
+unsafe extern "C" fn agent_start(fighter: &mut L2CFighterCommon)
+{
+    fighter.global_table[CHECK_SPECIAL_LW_UNIQ].assign(&L2CValue::Ptr(special_lw_callback as *const () as _));   
 }
 
 pub fn install() {   
@@ -288,8 +366,12 @@ pub fn install() {
 
         .acmd("game_squatn", game_crawl, Priority::Default)
 
-        //.status(Main, *FIGHTER_STATUS_KIND_SQUAT_F, squat_f_main)
-        //.status(Main, *FIGHTER_STATUS_KIND_SQUAT_B, squat_b_main)
+        .acmd("game_speciallw", game_speciallw, Priority::Default)
+        .acmd("effect_speciallw", effect_speciallw, Priority::Default)
+        .acmd("game_speciallwend", game_speciallwend, Priority::Default)
+        
+        .status(Main, *FIGHTER_STATUS_KIND_SQUAT_F, squat_f_main)
+        .status(Main, *FIGHTER_STATUS_KIND_SQUAT_B, squat_b_main)
         .status(Main, *FIGHTER_STATUS_KIND_SQUAT_WAIT, squat_wait_main)
 
         .status(Exit, *FIGHTER_STATUS_KIND_SQUAT_F, squat_exit)
@@ -298,9 +380,14 @@ pub fn install() {
 
         .status(Exec, *FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP_G, bomb_g_exec)
         .status(Exec, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW, speciallw_g_exec)
+        
+        .status(Init, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW, speciallw_g_init)        
+        .status(Main, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW, speciallw_g_main)
         //.status(Exec, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_AIR_LW, speciallw_a_exec)
 
         //.acmd("game_speciallw", game_speciallw, Priority::Default)
         //.acmd("effect_speciallw", effect_speciallw, Priority::Default)
+        .on_line(Main, samus_update)
+        .on_start(agent_start)
     .install();
 }
