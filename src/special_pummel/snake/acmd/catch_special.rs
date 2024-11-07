@@ -30,11 +30,14 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
             frame(agent.lua_state_agent, 13.0);
             if macros::is_excute(agent) {
                 if is_constraint_article(fighter, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL)) {
-                    println!("Stick");
                     ArticleModule::shoot(agent.module_accessor, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL), false);
                 }
             }
         }
+    }
+    frame(agent.lua_state_agent, 14.0);
+    if macros::is_excute(agent) {
+        WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_FLAG_ENABLE_CUT)
     }
 }
 
