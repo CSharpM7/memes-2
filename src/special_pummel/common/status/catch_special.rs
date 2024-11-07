@@ -22,8 +22,9 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
     let special_input = ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL)
     || ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL_RAW);
     let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_FLAG_FORBID_SPECIAL);
-    println!("Can special: {can_special}");
-    if special_input && can_special {
+    let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
+    println!("Can special: {can_special} Has special: {has_anim}");
+    if special_input && can_special && has_anim {
         println!("Special");
         fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special"))); //catch_attack
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_FLAG_FORBID_SPECIAL);
