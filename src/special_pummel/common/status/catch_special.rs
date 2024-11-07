@@ -35,6 +35,16 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
     }
 }
 pub unsafe extern "C" fn catch_attack_main_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
+    let clatter = ControlModule::get_clatter_time(opponent, 0);
+    println!("Clatter: {clatter}");
+    if WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_FLAG_ENABLE_CUT) {
+        if ControlModule::get_clatter_time(opponent, 0) <= 0.0 {
+            println!("Break");
+            StatusModule::change_status_request_from_script(opponent, *FIGHTER_STATUS_KIND_CAPTURE_CUT, false);
+            return 1.into();
+        }
+    }
     return fighter.status_CatchAttack_Main();
 }
 
