@@ -26,7 +26,8 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
     println!("Can special: {can_special} Has special: {has_anim}");
     if special_input && can_special && has_anim {
         println!("Special");
-        fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special"))); //catch_attack
+        fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
+        //MotionModule::change_motion(fighter.module_accessor, Hash40::new("catch_special"), 0.0, 1.0, false, 0.0, false, false);
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_FLAG_FORBID_SPECIAL);
         return fighter.sub_shift_status_main(L2CValue::Ptr(catch_attack_main_loop as *const () as _));
     }
