@@ -4,7 +4,8 @@
 )]
 #![allow(
     non_snake_case,
-    unused
+    unused,
+    static_mut_refs
 )]
 #![deny(
     deprecated
@@ -31,9 +32,10 @@ use smashline::*;
 //mod ledge_special;
 //mod snake_landmine;
 //mod temp;
-mod metroid_crawl;
+//mod metroid_crawl;
 //mod hero_skill;
-mod burst;
+//mod burst;
+mod special_pummel;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -45,7 +47,7 @@ pub fn smashline_install() {
 
 pub fn install() {
     println!("Loading memes");
-    crate::metroid_crawl::install();
+    crate::special_pummel::install();
 }
 
 #[skyline::main(name = "smashline2_memes")]
