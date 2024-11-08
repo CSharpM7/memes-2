@@ -14,3 +14,7 @@ pub fn install() {
     snake::install();
     common::install();
 }
+
+pub fn uninstall() {
+    common::uninstall();
+}

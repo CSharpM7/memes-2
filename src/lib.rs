@@ -44,10 +44,17 @@ use crate::imports::imports_agent::*;
 pub fn smashline_install() {
     install();
 }
+#[no_mangle]
+pub fn smashline_uninstall() {
+    uninstall();
+}
 
 pub fn install() {
     println!("Loading memes");
     crate::special_pummel::install();
+}
+pub fn uninstall() {
+    println!("Uninstalling...");
 }
 
 #[skyline::main(name = "smashline2_memes")]
