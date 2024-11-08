@@ -1,7 +1,3 @@
-/*
-Arms Reflect
-*/
-
 mod robot;
 
 pub fn install() {

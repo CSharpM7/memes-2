@@ -102,8 +102,10 @@ unsafe extern "C" fn expression_cliffspecial(agent: &mut L2CAgentBase) {
     }
 }
 pub fn install(agent: &mut smashline::Agent) {
-    agent.acmd("game_cliffspecial", game_cliffspecial);
-    agent.acmd("effect_cliffspecial", effect_cliffspecial);
-    agent.acmd("sound_cliffspecial", sound_cliffspecial);
-    agent.acmd("expression_cliffspecial", expression_cliffspecial);
+    Agent::new("samusd")
+        .acmd("game_cliffspecial", game_cliffspecial)
+        .acmd("effect_cliffspecial", effect_cliffspecial)
+        .acmd("sound_cliffspecial", sound_cliffspecial)
+        .acmd("expression_cliffspecial", expression_cliffspecial)
+    .install();
 }

@@ -176,5 +176,5 @@ pub fn install() {
         .acmd("sound_attackairhi",sound_attackairhi)
         .acmd("effect_attackairhi",effect_attackairhi)
         .on_line(Main, ike_update)
-        .install();
+    .install();
 }

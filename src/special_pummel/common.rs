@@ -1,18 +1,24 @@
 use crate::imports::imports_status::*;
 use crate::special_pummel::imports::*;
-/*
 
-    FIGHTER_STATUS_CATCH_CUT_WORK_INT_SITUATION: 0x11000005,
-    FIGHTER_STATUS_CATCH_DASH_WORK_INT_CATCH_TURN_FRAME: 0x11000005,
-    FIGHTER_STATUS_CATCH_FLAG_CATCH_WAIT: 0x2100000C,
-    FIGHTER_STATUS_CATCH_PULL_FLAG_UNNECESSARY_CLEAR_TRANS: 0x2100000C,
-    FIGHTER_STATUS_CATCH_PULL_WORK_INT_MOTION_KIND: 0x11000005,
-    FIGHTER_STATUS_CATCH_WAIT_WORK_INT_IK_LEFT_JOINT_ID: 0x11000007,
-    FIGHTER_STATUS_CATCH_WAIT_WORK_INT_IK_RIGHT_JOINT_ID: 0x11000008,
-    FIGHTER_STATUS_CATCH_WAIT_WORK_INT_LAST_STRANS: 0x11000006,
-    FIGHTER_STATUS_CATCH_WAIT_WORK_INT_MOTION_KIND: 0x11000005,
-*/
+// AGENT
+pub unsafe extern "C" fn change_status_callback(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let status_kind = StatusModule::status_kind(fighter.module_accessor);
+    let status_kind_next = StatusModule::status_kind_next(fighter.module_accessor);
 
+    if !(*FIGHTER_STATUS_KIND_CATCH_WAIT..*FIGHTER_STATUS_KIND_CAPTURE_JUMP).contains(&status_kind_next)
+    {
+        WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
+    }
+    true.into()
+}
+
+pub unsafe extern "C" fn agent_start(fighter: &mut L2CFighterCommon)
+{
+    fighter.global_table[STATUS_CHANGE_CALLBACK].assign(&L2CValue::Ptr(change_status_callback as *const () as _));   
+}
+
+// STATUS
 #[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_status_CatchAttack)]
 unsafe fn status_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
     return catch_attack_main_inner(fighter);
@@ -21,14 +27,14 @@ unsafe fn status_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
     let special_input = ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL)
     || ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL_RAW);
-    let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_FLAG_FORBID_SPECIAL);
+    let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
     let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
     println!("Can special: {can_special} Has special: {has_anim}");
     if special_input && can_special && has_anim {
         println!("Special");
         fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
         //MotionModule::change_motion(fighter.module_accessor, Hash40::new("catch_special"), 0.0, 1.0, false, 0.0, false, false);
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_FLAG_FORBID_SPECIAL);
+        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
         return fighter.sub_shift_status_main(L2CValue::Ptr(catch_attack_main_loop as *const () as _));
     }
     else {
@@ -61,9 +67,8 @@ fn nro_hook(info: &skyline::nro::NroInfo) {
 pub fn install() {
     #[cfg(feature = "devhook")]
     skyline::nro::add_hook(nro_hook);
-    /*
+    
     Agent::new("fighter")
-        .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_main_inner)
+        .on_start(agent_start)
     .install();
-    */
 }

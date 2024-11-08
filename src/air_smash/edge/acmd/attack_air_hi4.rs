@@ -185,5 +185,5 @@ pub fn install() {
         .effect_acmd("effect_landingairhi4", effect_landingairhi4)
         .expression_acmd("expression_landingairhi4", expression_landingairhi4)
 
-        .install();
+    .install();
 }

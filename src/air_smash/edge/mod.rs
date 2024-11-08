@@ -1,8 +1,6 @@
 mod acmd;
 mod agent;
 mod status;
-mod frame;
-mod other_fighters;
 
 use smashline;
 
