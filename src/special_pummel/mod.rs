@@ -7,10 +7,12 @@ Allows players to charge a unique aerial smash attack. This can be done in smash
 pub mod vars;
 pub mod imports;
 
+mod edge;
 mod snake;
 mod common;
 
 pub fn install() {
+    edge::install();
     snake::install();
     common::install();
 }

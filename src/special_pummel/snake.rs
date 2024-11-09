@@ -130,13 +130,16 @@ pub unsafe extern "C" fn catch_attack_snake(fighter: &mut L2CFighterCommon) -> L
     WorkModule::set_flag(fighter.module_accessor, has_c4, FIGHTER_SNAKE_STATUS_CATCH_FLAG_HAS_C4);
     if has_c4 && catch_attack_check_special(fighter) {
         fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special2")));
+        #[cfg(not(feature = "dev"))]
         return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_status_CatchAttack_Main as *const () as _));
+        #[cfg(feature = "dev")]
+        return fighter.sub_shift_status_main(L2CValue::Ptr(catch_attack_main_loop as *const () as _));
     }
     #[cfg(not(feature = "dev"))]
-    return catch_attack_main_inner(fighter);
+    return fighter.status_CatchAttack();
 
     #[cfg(feature = "dev")]
-    return fighter.status_CatchAttack();
+    return catch_attack_main_inner(fighter);
 }
 
 pub unsafe extern "C" fn catch_attack_exec_snake(fighter: &mut L2CFighterCommon) -> L2CValue {

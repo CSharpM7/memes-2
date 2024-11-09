@@ -9,6 +9,7 @@ pub unsafe extern "C" fn change_status_callback(fighter: &mut L2CFighterCommon) 
     if !(*FIGHTER_STATUS_KIND_CATCH_WAIT..*FIGHTER_STATUS_KIND_CAPTURE_JUMP).contains(&status_kind_next)
     {
         WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
+        WorkModule::set_int(fighter.module_accessor, 0, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
     }
     true.into()
 }
@@ -31,22 +32,38 @@ pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool
     let special_input = ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL)
     || ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL_RAW);
     let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
-    let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
     //println!("Can special: {can_special} Has special: {has_anim}");
-    return special_input && can_special && has_anim;
+    return special_input && can_special;
 }
+
+pub const PUMMEL_PENALTY_COUNT_MIN: i32 = 2;
+pub const PUMMEL_MAX_PENALTY_FACTOR: f32 = 0.375;
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
     if catch_attack_check_special(fighter) {
-        fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
-        //MotionModule::change_motion(fighter.module_accessor, Hash40::new("catch_special"), 0.0, 1.0, false, 0.0, false, false);
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
-        return fighter.sub_shift_status_main(L2CValue::Ptr(catch_attack_main_loop as *const () as _))
+        let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
+        //println!("Special pummel has anim: {has_anim}");
+        if has_anim {
+            let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
+            let mut clatter = ControlModule::get_clatter_time(opponent, 0);
+            let pummels = WorkModule::get_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
+            let clatter_t = ((PUMMEL_PENALTY_COUNT_MIN-pummels).max(0) as f32 / PUMMEL_PENALTY_COUNT_MIN as f32);
+            let clatter_factor = lerp(1.0,PUMMEL_MAX_PENALTY_FACTOR,clatter_t);
+            //println!("T: {clatter_t}. {clatter} x{clatter_factor}");
+
+            ControlModule::set_clatter_time(opponent, clatter*clatter_factor,0);
+
+            WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL); 
+
+            fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
+            return fighter.sub_shift_status_main(L2CValue::Ptr(catch_attack_main_loop as *const () as _))
+        }
+        else {
+            fighter.change_status(FIGHTER_STATUS_KIND_SPECIAL_N.into(), false.into());
+            return 1.into()
+        }
     }
-    else {
-        fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")));
-    }
-    
-    fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_status_CatchAttack_Main as *const () as _))
+    WorkModule::inc_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
+    fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")))
 }
 
 pub unsafe extern "C" fn catch_attack_main_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
@@ -54,6 +71,7 @@ pub unsafe extern "C" fn catch_attack_main_loop(fighter: &mut L2CFighterCommon) 
     WorkModule::off_flag(opponent,*FIGHTER_STATUS_CAPTURE_PULLED_WORK_FLAG_JUMP);
 
     let mut clatter = ControlModule::get_clatter_time(opponent, 0);
+    //println!("Clatter: {clatter}");
     let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
     if disable_clatter {
         clatter = WorkModule::get_float(fighter.module_accessor,FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
