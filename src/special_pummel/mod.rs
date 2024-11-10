@@ -8,11 +8,13 @@ pub mod vars;
 pub mod imports;
 
 mod edge;
+mod metaknight;
 mod snake;
 mod common;
 
 pub fn install() {
     edge::install();
+    metaknight::install();
     snake::install();
     common::install();
 }

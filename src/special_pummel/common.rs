@@ -1,12 +1,15 @@
 use crate::imports::imports_status::*;
 use crate::special_pummel::imports::*;
 
+pub const PUMMEL_PENALTY_COUNT_MIN: i32 = 2;
+pub const PUMMEL_MAX_PENALTY_FACTOR: f32 = 0.375;
 // AGENT
 pub unsafe extern "C" fn change_status_callback(fighter: &mut L2CFighterCommon) -> L2CValue {
     let status_kind = StatusModule::status_kind(fighter.module_accessor);
     let status_kind_next = StatusModule::status_kind_next(fighter.module_accessor);
 
     if !(*FIGHTER_STATUS_KIND_CATCH_WAIT..*FIGHTER_STATUS_KIND_CAPTURE_JUMP).contains(&status_kind_next)
+    && ![*FIGHTER_STATUS_KIND_ATTACK,*FIGHTER_STATUS_KIND_ATTACK_100].contains(&status_kind_next)
     {
         WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
         WorkModule::set_int(fighter.module_accessor, 0, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
@@ -25,7 +28,7 @@ unsafe fn status_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
     return catch_attack_main_inner(fighter);
 }
 
-pub unsafe extern "C"  fn catch_attack_main(fighter: &mut L2CFighterCommon) -> L2CValue {
+pub unsafe extern "C" fn catch_attack_main(fighter: &mut L2CFighterCommon) -> L2CValue {
     return catch_attack_main_inner(fighter);
 }
 pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool {
@@ -36,19 +39,17 @@ pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool
     return special_input && can_special;
 }
 
-pub const PUMMEL_PENALTY_COUNT_MIN: i32 = 2;
-pub const PUMMEL_MAX_PENALTY_FACTOR: f32 = 0.375;
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
     if catch_attack_check_special(fighter) {
         let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
-        //println!("Special pummel has anim: {has_anim}");
+        println!("Special pummel has anim: {has_anim}");
         if has_anim {
             let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
             let mut clatter = ControlModule::get_clatter_time(opponent, 0);
             let pummels = WorkModule::get_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
-            let clatter_t = ((PUMMEL_PENALTY_COUNT_MIN-pummels).max(0) as f32 / PUMMEL_PENALTY_COUNT_MIN as f32);
-            let clatter_factor = lerp(1.0,PUMMEL_MAX_PENALTY_FACTOR,clatter_t);
-            //println!("T: {clatter_t}. {clatter} x{clatter_factor}");
+            let clatter_t = ((pummels as f32) / (PUMMEL_PENALTY_COUNT_MIN as f32)).min(1.0);
+            let clatter_factor = lerp(PUMMEL_MAX_PENALTY_FACTOR,1.0,clatter_t);
+            println!("T: {clatter_t}. {clatter} x{clatter_factor}");
 
             ControlModule::set_clatter_time(opponent, clatter*clatter_factor,0);
 
@@ -58,7 +59,36 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
             return fighter.sub_shift_status_main(L2CValue::Ptr(catch_attack_main_loop as *const () as _))
         }
         else {
-            fighter.change_status(FIGHTER_STATUS_KIND_SPECIAL_N.into(), false.into());
+            let mut next_status = FIGHTER_STATUS_KIND_ATTACK;
+            let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
+
+            if [*FIGHTER_KIND_KOOPA,*FIGHTER_KIND_PLIZARDON,*FIGHTER_KIND_WOLF]
+            .contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_SPECIAL_N;}
+
+            else if [*FIGHTER_KIND_GAMEWATCH,*FIGHTER_KIND_ROBOT,*FIGHTER_KIND_CLOUD,*FIGHTER_KIND_JACK]
+            .contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_SPECIAL_S;}
+
+            //else if [*FIGHTER_KIND_REFLET,*FIGHTER_KIND_DEMON]
+            //.contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_SPECIAL_LW;}
+            
+            else if [*FIGHTER_KIND_PIKACHU,*FIGHTER_KIND_PICHU].contains(&fighter_kind) {next_status = FIGHTER_PIKACHU_STATUS_KIND_SPECIAL_S_ATTACK;}
+            else if *FIGHTER_KIND_PACMAN == fighter_kind {next_status = FIGHTER_STATUS_KIND_ATTACK_DASH;}
+            else if [*FIGHTER_KIND_MURABITO,*FIGHTER_KIND_SHIZUE].contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_ATTACK_S3;}
+            else if *FIGHTER_KIND_KEN == fighter_kind {next_status = FIGHTER_RYU_STATUS_KIND_ATTACK_COMMAND1;}
+            else if *FIGHTER_KIND_PACKUN == fighter_kind {next_status = FIGHTER_PACKUN_STATUS_KIND_SPECIAL_S_SHOOT;}
+            else if *FIGHTER_KIND_PICKEL == fighter_kind {next_status = FIGHTER_STATUS_KIND_ATTACK_LW3;}
+            else if *FIGHTER_KIND_DEMON == fighter_kind {next_status = FIGHTER_DEMON_STATUS_KIND_FLASH_PUNCH;}
+            else {
+                let attack100_type = WorkModule::get_param_int(fighter.module_accessor, hash40("attack100_type"), 0);
+                let attack_combo_max = WorkModule::get_param_int(fighter.module_accessor, hash40("attack_combo_max"), 0);
+                if attack100_type != *FIGHTER_ATTACK100_TYPE_NONE {
+                    next_status = FIGHTER_STATUS_KIND_ATTACK_100;
+                }
+                else {
+                    next_status = FIGHTER_STATUS_KIND_ATTACK;
+                }
+            }            
+            fighter.change_status(next_status.into(), false.into());
             return 1.into()
         }
     }
@@ -98,12 +128,64 @@ pub unsafe fn catch_attack_end_inner(fighter: &mut L2CFighterCommon) -> L2CValue
     }
     return fighter.status_end_CatchWait();
 }
+
+#[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_attack_mtrans_post_process)]
+unsafe extern "C" fn attack_mtrans_pre_process(fighter: &mut L2CFighterCommon) {
+    let original = original!()(fighter);
+    if fighter.global_table[PREV_STATUS_KIND].get_i32() == *FIGHTER_STATUS_KIND_CATCH_ATTACK {
+        let attack_combo_max = WorkModule::get_param_int(fighter.module_accessor, hash40("attack_combo_max"), 0);
+        let new_motion = match (attack_combo_max) {
+            3 => "attack_13",
+            2 => "attack_12",
+            _ => "attack_11"
+        };
+        let pummels = WorkModule::get_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
+        let power_t = ((pummels as f32) / (PUMMEL_PENALTY_COUNT_MIN as f32)).min(1.0);
+        let power = lerp(1.5,2.5,power_t);
+        AttackModule::set_power_mul_status(fighter.module_accessor, power);
+        
+        MotionModule::change_motion(fighter.module_accessor, Hash40::new(new_motion), 0.0, 1.0, false, 0.0, false, false);
+    }
+}
+
+#[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_status_Attack100_Main_uniq_func)]
+unsafe extern "C" fn attack_100_main(fighter: &mut L2CFighterCommon, param_1: L2CValue) {
+    original!()(fighter,param_1); 
+
+    let step = WorkModule::get_int(fighter.module_accessor, *FIGHTER_STATUS_ATTACK_WORK_INT_100_STEP);
+    if fighter.global_table[PREV_STATUS_KIND].get_i32() == *FIGHTER_STATUS_KIND_CATCH_ATTACK 
+    && step == *FIGHTER_STATUS_ATTACK_100_STEP_LOOP {
+        
+        let pummels = WorkModule::get_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
+        let power_t = ((pummels as f32) / (PUMMEL_PENALTY_COUNT_MIN as f32)).min(1.0);
+        let power = lerp(1.0,2.0,power_t);
+        AttackModule::set_power_mul_status(fighter.module_accessor, power);
+
+        if WorkModule::is_flag(fighter.module_accessor, *FIGHTER_STATUS_ATTACK_FLAG_100_LOOPED) {
+            AttackModule::set_power_mul_status(fighter.module_accessor, 1.0);
+            WorkModule::off_flag(fighter.module_accessor, *FIGHTER_STATUS_ATTACK_FLAG_100_CONTINUE);
+            MotionModule::change_motion(fighter.module_accessor, Hash40::new("attack_100_end"), 0.0, 1.0, false, 0.0, false, false);
+            WorkModule::set_int(fighter.module_accessor, 0, *FIGHTER_STATUS_ATTACK_WORK_INT_100_HIT_NEAR_COUNT);
+            WorkModule::set_int(fighter.module_accessor, 0, *FIGHTER_STATUS_WORK_ID_INT_RESERVE_ATTACK_MINI_JUMP_ATTACK_FRAME);
+            WorkModule::set_int(fighter.module_accessor, *FIGHTER_STATUS_ATTACK_100_STEP_END, *FIGHTER_STATUS_ATTACK_WORK_INT_100_STEP);
+            WorkModule::set_int(fighter.module_accessor, *FIGHTER_LOG_ATTACK_SUB_KIND_UNIQ, *FIGHTER_INSTANCE_WORK_ID_INT_TRICK_SUB);
+        }
+    }
+}
+
 fn nro_hook(info: &skyline::nro::NroInfo) {
     if info.name == "common" {
         skyline::install_hooks!(
-            status_CatchAttack,
-            status_end_CatchAttack
+            attack_mtrans_pre_process,
+            attack_100_main,
         );
+
+        #[cfg(not(feature = "devhook"))] {
+        skyline::install_hooks!(
+            status_CatchAttack,
+            status_end_CatchAttack,
+        );
+        }
     }
 }
 
