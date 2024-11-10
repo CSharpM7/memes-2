@@ -9,13 +9,17 @@ pub mod imports;
 
 mod edge;
 mod metaknight;
+mod packun;
 mod snake;
+mod tantan;
 mod common;
 
 pub fn install() {
     edge::install();
     metaknight::install();
+    packun::install();
     snake::install();
+    tantan::install();
     common::install();
 }
 

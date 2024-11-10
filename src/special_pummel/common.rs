@@ -35,12 +35,13 @@ pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool
     let special_input = ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL)
     || ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL_RAW);
     let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
-    //println!("Can special: {can_special} Has special: {has_anim}");
+    println!("Can special: {can_special}");
     return special_input && can_special;
 }
 
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
     if catch_attack_check_special(fighter) {
+        ControlModule::clear_command(fighter.module_accessor, true);
         let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
         println!("Special pummel has anim: {has_anim}");
         if has_anim {
@@ -56,7 +57,7 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
             WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL); 
 
             fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
-            return fighter.sub_shift_status_main(L2CValue::Ptr(catch_attack_main_loop as *const () as _))
+            return fighter.sub_shift_status_main(L2CValue::Ptr(catch_special_main_loop as *const () as _))
         }
         else {
             let mut next_status = FIGHTER_STATUS_KIND_ATTACK;
@@ -96,7 +97,7 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
     fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")))
 }
 
-pub unsafe extern "C" fn catch_attack_main_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
+pub unsafe extern "C" fn catch_special_main_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
     let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
     WorkModule::off_flag(opponent,*FIGHTER_STATUS_CAPTURE_PULLED_WORK_FLAG_JUMP);
 
@@ -113,6 +114,10 @@ pub unsafe extern "C" fn catch_attack_main_loop(fighter: &mut L2CFighterCommon) 
     return fighter.status_CatchAttack_Main();
 }
 
+pub unsafe extern "C" fn catch_attack_main_default(fighter: &mut L2CFighterCommon) -> L2CValue {
+    WorkModule::inc_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
+    fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")))
+}
 
 #[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_status_end_CatchAttack)]
 unsafe fn status_end_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
@@ -141,7 +146,7 @@ unsafe extern "C" fn attack_mtrans_pre_process(fighter: &mut L2CFighterCommon) {
         };
         let pummels = WorkModule::get_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
         let power_t = ((pummels as f32) / (PUMMEL_PENALTY_COUNT_MIN as f32)).min(1.0);
-        let power = lerp(1.5,2.5,power_t);
+        let power = lerp(1.25,1.625,power_t);
         AttackModule::set_power_mul_status(fighter.module_accessor, power);
         
         MotionModule::change_motion(fighter.module_accessor, Hash40::new(new_motion), 0.0, 1.0, false, 0.0, false, false);
@@ -193,12 +198,13 @@ pub fn install() {
     #[cfg(not(feature = "dev"))]
     skyline::nro::add_hook(nro_hook);
 
-    #[cfg(feature = "dev")] {
-    Agent::new("fighter")
-        .on_start(agent_start)
-        .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_main)
-    .install();
-    }
+    let common = &mut Agent::new("fighter");
+    common.on_start(agent_start);
+
+    #[cfg(feature = "dev")]
+    common.status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_main);
+
+    common.install();
 }
 
 pub fn uninstall() {
