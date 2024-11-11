@@ -12,6 +12,7 @@ mod gaogaen;
 mod koopa;
 mod metaknight;
 mod packun;
+mod reflet;
 mod rosetta;
 mod snake;
 mod tantan;
@@ -23,6 +24,7 @@ pub fn install() {
     koopa::install();
     metaknight::install();
     packun::install();
+    reflet::install();
     rosetta::install();
     snake::install();
     tantan::install();

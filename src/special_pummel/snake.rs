@@ -141,9 +141,6 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
     return fighter.status_CatchAttack();
 }
 
-pub unsafe extern "C" fn catch_attack_exec_snake(fighter: &mut L2CFighterCommon) -> L2CValue {
-    0.into()
-}
 pub unsafe extern "C" fn catch_attack_end_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     ArticleModule::remove_exist(fighter.module_accessor, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4_SWITCH, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
     fighter.status_end_CatchAttack()
