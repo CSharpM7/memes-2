@@ -9,8 +9,10 @@ pub mod imports;
 
 mod edge;
 mod gaogaen;
+mod koopa;
 mod metaknight;
 mod packun;
+mod rosetta;
 mod snake;
 mod tantan;
 mod common;
@@ -18,8 +20,10 @@ mod common;
 pub fn install() {
     edge::install();
     gaogaen::install();
+    koopa::install();
     metaknight::install();
     packun::install();
+    rosetta::install();
     snake::install();
     tantan::install();
     common::install();

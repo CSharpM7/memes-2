@@ -76,7 +76,6 @@ pub unsafe fn add_revenge(fighter: &mut L2CFighterCommon) {
     if !has_revenge {
         WorkModule::on_flag(fighter.module_accessor, *FIGHTER_GAOGAEN_INSTANCE_WORK_ID_FLAG_IS_REVENGE);
         new_rate = (damage_rate) + (1.0);
-        MotionAnimcmdModule::call_script_single(fighter.module_accessor, *FIGHTER_ANIMCMD_GAME, Hash40::new("effect_speciallwrevenge"), -1);
     }
     else {
         new_rate = rate + (damage_rate* (1.0-base*(rate-1.0)));
@@ -88,6 +87,7 @@ pub unsafe fn add_revenge(fighter: &mut L2CFighterCommon) {
     WorkModule::set_float(fighter.module_accessor,new_rate,*FIGHTER_GAOGAEN_INSTANCE_WORK_ID_FLOAT_REVENGE_RATE);
 
     println!("Revenge: {rate} > {new_rate}");
+    MotionAnimcmdModule::call_script_single(fighter.module_accessor, *FIGHTER_ANIMCMD_EFFECT, Hash40::new("effect_speciallwrevenge"), -1);
 }
 
 pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
@@ -113,7 +113,6 @@ pub unsafe extern "C" fn catch_attack_exec_uniq(fighter: &mut L2CFighterCommon) 
         if WorkModule::is_flag(fighter.module_accessor,FIGHTER_GAOGAEN_STATUS_CATCH_FLAG_REVENGE) {
             add_revenge(fighter);
             WorkModule::off_flag(fighter.module_accessor,FIGHTER_GAOGAEN_STATUS_CATCH_FLAG_REVENGE);
-            MotionAnimcmdModule::call_script_single(fighter.module_accessor, *FIGHTER_ANIMCMD_EFFECT, Hash40::new("effect_speciallwrevenge"), -1);
         }
     }
     return 0.into();

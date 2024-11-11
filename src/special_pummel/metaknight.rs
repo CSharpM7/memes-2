@@ -175,7 +175,7 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
         MotionModule::change_motion(fighter.module_accessor, Hash40::new("catch_special"), 0.0, 1.0, false, 0.0, false, false);
 
         let capture_id = WorkModule::get_int64(fighter.module_accessor,FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID) as u64;
-        if capture_id != 0 && capture_id != OBJECT_ID_NULL as u64{
+        if capture_id != OBJECT_ID_NULL as u64{
             let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
             MotionModule::change_motion(capture_boma, Hash40::new("damage_lw_3"),0.0,0.8,false,0.0,false,false); 
         }
@@ -210,7 +210,7 @@ pub unsafe extern "C" fn throw_sp_main_loop_uniq(fighter: &mut L2CFighterCommon)
             let motion = if throw_F {Hash40::new("special_lw_f")} else {Hash40::new("special_lw_b")};
             
             let capture_id = WorkModule::get_int64(fighter.module_accessor,FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID) as u64;
-            if capture_id != 0 && capture_id != OBJECT_ID_NULL as u64 {
+            if capture_id != OBJECT_ID_NULL as u64 {
                 let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
                 let capture_pos = *PostureModule::pos(capture_boma);
                 PostureModule::set_pos(fighter.module_accessor, 

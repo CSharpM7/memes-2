@@ -43,12 +43,11 @@ pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool
     let special_input = ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL)
     || ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL_RAW);
     let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
-    println!("Can special: {can_special}");
+    //println!("Can special: {can_special}");
     return special_input && can_special;
 }
 
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
-    println!("Attack?");
     if catch_attack_check_special(fighter) {
         WorkModule::on_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
         ControlModule::clear_command(fighter.module_accessor, false);
@@ -86,7 +85,6 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
             else if *FIGHTER_KIND_PACMAN == fighter_kind {next_status = FIGHTER_STATUS_KIND_ATTACK_DASH;}
             else if [*FIGHTER_KIND_MURABITO,*FIGHTER_KIND_SHIZUE].contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_ATTACK_S3;}
             else if *FIGHTER_KIND_KEN == fighter_kind {next_status = FIGHTER_RYU_STATUS_KIND_ATTACK_COMMAND1;}
-            else if *FIGHTER_KIND_PACKUN == fighter_kind {next_status = FIGHTER_PACKUN_STATUS_KIND_SPECIAL_S_SHOOT;}
             else if *FIGHTER_KIND_PICKEL == fighter_kind {next_status = FIGHTER_STATUS_KIND_ATTACK_LW3;}
             else if *FIGHTER_KIND_DEMON == fighter_kind {next_status = FIGHTER_DEMON_STATUS_KIND_FLASH_PUNCH;}
             else {
@@ -190,7 +188,7 @@ fn nro_hook(info: &skyline::nro::NroInfo) {
 pub fn install() {
     #[cfg(not(feature = "dev"))]
     skyline::nro::add_hook(nro_hook);
-    
+
     #[cfg(feature = "devhook")]
     return;
 
