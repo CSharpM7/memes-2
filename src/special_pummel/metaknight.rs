@@ -1,7 +1,6 @@
 use crate::imports::imports_acmd::*;
 use crate::special_pummel::imports::*;
 
-pub const FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_FLAG_SPECIAL_PUMMEL: i32 = 0x210000E5;
 pub const FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID: i32 = 0x100000BF;
 pub const FIGHTER_METAKNIGHT_STATUS_THROW_FLAG_START: i32 = 0x2100000E;
 
@@ -53,6 +52,7 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
         //WorkModule::on_flag(agent.module_accessor, *FIGHTER_METAKNIGHT_STATUS_SPECIAL_LW_START_FLAG_VIS_OFF);
         //KineticModule::change_kinetic(agent.module_accessor, *FIGHTER_KINETIC_TYPE_METAKNIGHT_SPECIAL_LW_FREE_MOVE);
         JostleModule::set_status(agent.module_accessor, false);
+        macros::WHOLE_HIT(agent, *HIT_STATUS_XLU);
     }
     frame(agent.lua_state_agent, 27.0);
     if macros::is_excute(agent) {
@@ -146,23 +146,21 @@ unsafe extern "C" fn game_catchspecialf(agent: &mut L2CAgentBase) {
 STATUS
 */
 pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
-    WorkModule::off_flag(fighter.module_accessor, FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_FLAG_SPECIAL_PUMMEL);
+    WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
     if catch_attack_check_special(fighter) {
+        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
+
         let opponent_id = LinkModule::get_node_object_id(fighter.module_accessor, *LINK_NO_CAPTURE) as u32;
         WorkModule::set_int64(fighter.module_accessor, opponent_id as i64, FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID);
         
         let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
         StatusModule::change_status_force(opponent, *FIGHTER_STATUS_KIND_FURAFURA_STAND, true);
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_FLAG_SPECIAL_PUMMEL);
         
         fighter.change_status(FIGHTER_STATUS_KIND_THROW.into(), false.into());
         return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
     }
-    #[cfg(not(feature = "dev"))]
+    
     return fighter.status_CatchAttack();
-
-    #[cfg(feature = "dev")]
-    return catch_attack_main_inner(fighter); 
 }
 
 pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
@@ -172,8 +170,7 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
         return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_status_Throw_Main as *const () as _));
     }
     if StatusModule::prev_status_kind(fighter.module_accessor, 0) == *FIGHTER_STATUS_KIND_CATCH_ATTACK 
-    && WorkModule::is_flag(fighter.module_accessor, FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_FLAG_SPECIAL_PUMMEL) 
-    && !StopModule::is_stop(fighter.module_accessor){
+    && WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
         ArticleModule::generate_article(fighter.module_accessor, *FIGHTER_METAKNIGHT_GENERATE_ARTICLE_MANTLE, false, -1);
         MotionModule::change_motion(fighter.module_accessor, Hash40::new("catch_special"), 0.0, 1.0, false, 0.0, false, false);
 
@@ -184,7 +181,6 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
         }
         return fighter.sub_shift_status_main(L2CValue::Ptr(throw_sp_main_loop_uniq as *const () as _))
     }
-    WorkModule::off_flag(fighter.module_accessor, FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_FLAG_SPECIAL_PUMMEL);
     fighter.sub_shift_status_main(L2CValue::Ptr(throw_main_loop_uniq as *const () as _))
 }
 pub unsafe extern "C" fn throw_main_loop_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {

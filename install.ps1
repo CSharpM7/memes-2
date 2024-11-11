@@ -12,7 +12,6 @@ If ($args[0] -like "*devhook*") {
 }
 elseif ($args[0] -like "*dev*") {
     cargo skyline install --install-path rom:/smashline/development.nro --features="dev"
-    #cargo skyline install --install-path $modPath --features="devhook"
     Write-Output "$(Get-TimeStamp) Installed dev plugin"
 }
 else{

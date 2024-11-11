@@ -1,18 +1,29 @@
 use crate::imports::imports_status::*;
 use crate::special_pummel::imports::*;
 
+pub const FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL: i32 = 0x20000116;
+pub const FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL: i32 = 0x20000117;
+pub const FIGHTER_INSTANCE_CATCH_ATTACK_COUNT : i32 = 0x100000ED;
+
+pub const FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER: i32 = 0x2100000B;
+pub const FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP: i32 = 0x1000007;
+
 pub const PUMMEL_PENALTY_COUNT_MIN: i32 = 2;
 pub const PUMMEL_MAX_PENALTY_FACTOR: f32 = 0.375;
 // AGENT
 pub unsafe extern "C" fn change_status_callback(fighter: &mut L2CFighterCommon) -> L2CValue {
     let status_kind = StatusModule::status_kind(fighter.module_accessor);
     let status_kind_next = StatusModule::status_kind_next(fighter.module_accessor);
-
-    if !(*FIGHTER_STATUS_KIND_CATCH_WAIT..*FIGHTER_STATUS_KIND_CAPTURE_JUMP).contains(&status_kind_next)
-    && ![*FIGHTER_STATUS_KIND_ATTACK,*FIGHTER_STATUS_KIND_ATTACK_100].contains(&status_kind_next)
+    
+    if ![*FIGHTER_STATUS_KIND_ATTACK,*FIGHTER_STATUS_KIND_ATTACK_100].contains(&status_kind_next)
+    && ![*FIGHTER_STATUS_KIND_THROW,*FIGHTER_STATUS_KIND_THROW_KIRBY].contains(&status_kind_next)
     {
-        WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
-        WorkModule::set_int(fighter.module_accessor, 0, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
+        WorkModule::off_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
+        
+        if !(*FIGHTER_STATUS_KIND_CATCH_WAIT..*FIGHTER_STATUS_KIND_CAPTURE_JUMP).contains(&status_kind_next) {
+            WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
+            WorkModule::set_int(fighter.module_accessor, 0, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
+        }
     }
     true.into()
 }
@@ -28,20 +39,19 @@ unsafe fn status_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
     return catch_attack_main_inner(fighter);
 }
 
-pub unsafe extern "C" fn catch_attack_main(fighter: &mut L2CFighterCommon) -> L2CValue {
-    return catch_attack_main_inner(fighter);
-}
 pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool {
     let special_input = ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL)
     || ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL_RAW);
-    let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL);
+    let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
     println!("Can special: {can_special}");
     return special_input && can_special;
 }
 
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
+    println!("Attack?");
     if catch_attack_check_special(fighter) {
-        ControlModule::clear_command(fighter.module_accessor, true);
+        WorkModule::on_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
+        ControlModule::clear_command(fighter.module_accessor, false);
         let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
         println!("Special pummel has anim: {has_anim}");
         if has_anim {
@@ -50,11 +60,11 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
             let pummels = WorkModule::get_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
             let clatter_t = ((pummels as f32) / (PUMMEL_PENALTY_COUNT_MIN as f32)).min(1.0);
             let clatter_factor = lerp(PUMMEL_MAX_PENALTY_FACTOR,1.0,clatter_t);
-            println!("T: {clatter_t}. {clatter} x{clatter_factor}");
+            //println!("T: {clatter_t}. {clatter} x{clatter_factor}");
 
             ControlModule::set_clatter_time(opponent, clatter*clatter_factor,0);
 
-            WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_FLAG_FORBID_SPECIAL); 
+            WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
 
             fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
             return fighter.sub_shift_status_main(L2CValue::Ptr(catch_special_main_loop as *const () as _))
@@ -119,21 +129,6 @@ pub unsafe extern "C" fn catch_attack_main_default(fighter: &mut L2CFighterCommo
     fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")))
 }
 
-#[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_status_end_CatchAttack)]
-unsafe fn status_end_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
-    catch_attack_end_inner(fighter)
-}
-
-pub unsafe fn catch_attack_end_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let opponent_id = LinkModule::get_node_object_id(fighter.module_accessor, *LINK_NO_CAPTURE) as u32;
-    if (opponent_id != 0 && opponent_id != OBJECT_ID_NULL) {
-        let opponent = &mut *(*get_battle_object_from_id(opponent_id)).module_accessor;
-        ControlModule::set_clatter_stop(opponent, false);
-        println!("Reset clatter");
-    }
-    return fighter.status_end_CatchWait();
-}
-
 #[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_attack_mtrans_post_process)]
 unsafe extern "C" fn attack_mtrans_pre_process(fighter: &mut L2CFighterCommon) {
     let original = original!()(fighter);
@@ -185,25 +180,23 @@ fn nro_hook(info: &skyline::nro::NroInfo) {
             attack_100_main,
         );
 
-        #[cfg(not(feature = "devhook"))] {
+        //#[cfg(not(feature = "devhook"))]
         skyline::install_hooks!(
             status_CatchAttack,
-            status_end_CatchAttack,
         );
-        }
     }
 }
 
 pub fn install() {
     #[cfg(not(feature = "dev"))]
     skyline::nro::add_hook(nro_hook);
+    
+    #[cfg(feature = "devhook")]
+    return;
 
     let common = &mut Agent::new("fighter");
     common.on_start(agent_start);
-
-    #[cfg(feature = "dev")]
-    common.status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_main);
-
+    
     common.install();
 }
 

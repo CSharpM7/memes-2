@@ -10,6 +10,7 @@ extern "C" {
         arg3: smash::app::ArticleOperationTarget,
     ) -> bool;
 }
+pub const FIGHTER_SNAKE_STATUS_CATCH_FLAG_HAS_C4: i32 = 0x2100000D;
 
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     let object = sv_system::battle_object(agent.lua_state_agent);
@@ -125,37 +126,30 @@ unsafe extern "C" fn expression_catchspecial2(agent: &mut L2CAgentBase) {
 /*
 STATUS
 */
-pub unsafe extern "C" fn catch_attack_snake(fighter: &mut L2CFighterCommon) -> L2CValue {
+pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     let has_c4 = ArticleModule::is_exist(fighter.module_accessor, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4);
     WorkModule::set_flag(fighter.module_accessor, has_c4, FIGHTER_SNAKE_STATUS_CATCH_FLAG_HAS_C4);
+    WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
     if has_c4 && catch_attack_check_special(fighter) {
+        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
         ControlModule::clear_command(fighter.module_accessor, true);
         fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special2")));
-        #[cfg(not(feature = "dev"))]
-        return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
-        #[cfg(feature = "dev")]
-        return fighter.sub_shift_status_main(L2CValue::Ptr(catch_special_main_loop as *const () as _));
-    }
-    #[cfg(not(feature = "dev"))]
-    return fighter.status_CatchAttack();
 
-    #[cfg(feature = "dev")]
-    return catch_attack_main_inner(fighter);
+        return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
+    }
+    
+    return fighter.status_CatchAttack();
 }
 
 pub unsafe extern "C" fn catch_attack_exec_snake(fighter: &mut L2CFighterCommon) -> L2CValue {
     0.into()
 }
-pub unsafe extern "C" fn catch_attack_end_snake(fighter: &mut L2CFighterCommon) -> L2CValue {
+pub unsafe extern "C" fn catch_attack_end_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     ArticleModule::remove_exist(fighter.module_accessor, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4_SWITCH, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
-    #[cfg(not(feature = "dev"))]
-    return catch_attack_end_inner(fighter);
-
-    #[cfg(feature = "dev")]
-    return fighter.status_end_CatchAttack();
+    fighter.status_end_CatchAttack()
 }
 
-pub unsafe extern "C" fn catch_cut_snake(fighter: &mut L2CFighterCommon) -> L2CValue {
+pub unsafe extern "C" fn catch_cut_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     let has_c4 = ArticleModule::is_exist(fighter.module_accessor, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4);
     if has_c4 {
         let object = sv_system::battle_object(fighter.lua_state_agent);
@@ -180,8 +174,8 @@ pub fn install() {
         .acmd("sound_catchspecial2", sound_catchspecial2,Priority::Default)
         .acmd("expression_catchspecial2", expression_catchspecial2,Priority::Default)
 
-        .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_snake)
-        .status(End, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_end_snake)
-        .status(Init, *FIGHTER_STATUS_KIND_CATCH_CUT, catch_cut_snake)
+        .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_uniq)
+        .status(End, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_end_uniq)
+        .status(Init, *FIGHTER_STATUS_KIND_CATCH_CUT, catch_cut_uniq)
     .install();
 }

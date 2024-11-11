@@ -8,6 +8,7 @@ pub mod vars;
 pub mod imports;
 
 mod edge;
+mod gaogaen;
 mod metaknight;
 mod packun;
 mod snake;
@@ -16,6 +17,7 @@ mod common;
 
 pub fn install() {
     edge::install();
+    gaogaen::install();
     metaknight::install();
     packun::install();
     snake::install();
