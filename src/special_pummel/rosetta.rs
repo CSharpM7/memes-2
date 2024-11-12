@@ -90,7 +90,8 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
                 SoundModule::play_se(fighter.module_accessor, Hash40::new("se_rosetta_special_s02"), true, false, false, false, enSEType(0));
             }
             else {
-                //return catch_attack_main_default(fighter);
+                WorkModule::off_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
+                return catch_attack_main_default(fighter);
             }
         }
     }

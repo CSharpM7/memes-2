@@ -12,6 +12,8 @@ mod gaogaen;
 mod koopa;
 mod metaknight;
 mod packun;
+mod pfushigisou;
+mod pikmin;
 mod reflet;
 mod rosetta;
 mod snake;
@@ -24,6 +26,8 @@ pub fn install() {
     koopa::install();
     metaknight::install();
     packun::install();
+    pfushigisou::install();
+    pikmin::install();
     reflet::install();
     rosetta::install();
     snake::install();
