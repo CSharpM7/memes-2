@@ -91,9 +91,8 @@ pub unsafe fn add_revenge(fighter: &mut L2CFighterCommon) {
 }
 
 pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
-    WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
-    if catch_attack_check_special(fighter) {
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
+    let to_return = catch_attack_main_inner(fighter);
+    if WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
         add_revenge(fighter);
 
         let opponent_id = LinkModule::get_node_object_id(fighter.module_accessor, *LINK_NO_CAPTURE) as u32;
@@ -105,7 +104,7 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
         return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
     }
     
-    return fighter.status_CatchAttack();
+    return to_return;
 }
 
 pub unsafe extern "C" fn catch_attack_exec_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {

@@ -127,18 +127,17 @@ unsafe extern "C" fn expression_catchspecial2(agent: &mut L2CAgentBase) {
 STATUS
 */
 pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let to_return = catch_attack_main_inner(fighter);
+
     let has_c4 = ArticleModule::is_exist(fighter.module_accessor, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4);
     WorkModule::set_flag(fighter.module_accessor, has_c4, FIGHTER_SNAKE_STATUS_CATCH_FLAG_HAS_C4);
-    WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
-    if has_c4 && catch_attack_check_special(fighter) {
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
-        ControlModule::clear_command(fighter.module_accessor, true);
-        fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special2")));
 
+    if has_c4 && WorkModule::is_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
+        fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special2")));
         return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
     }
     
-    return fighter.status_CatchAttack();
+    return to_return;
 }
 
 pub unsafe extern "C" fn catch_attack_end_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {

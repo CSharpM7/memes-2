@@ -2,19 +2,19 @@ use crate::imports::imports_acmd::*;
 use crate::imports::imports_status::*;
 use crate::special_pummel::imports::*;
 
-pub const FIGHTER_ROSETTA_STATUS_CATCH_FLAG_STARPIECES: i32 = 0x2100000E;
+pub const FIGHTER_ROSETTA_STATUS_CATCH_FLAG_STARPIECES: i32 = 0x2100000D;
 
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
-    if WorkModule::is_flag(agent.module_accessor, FIGHTER_ROSETTA_STATUS_CATCH_FLAG_STARPIECES) {
-        frame(agent.lua_state_agent, 12.0);
-        if macros::is_excute(agent) {
+    frame(agent.lua_state_agent, 12.0);
+    if macros::is_excute(agent) {
+        if WorkModule::is_flag(agent.module_accessor, FIGHTER_ROSETTA_STATUS_CATCH_FLAG_STARPIECES) {
             macros::ATTACK(agent, 0, 0, Hash40::new("top"), 3.0, 361, 100, 30, 0, 7.0, 0.0, 10.0, 11.0, None, None, None, 0.5, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 6, false, false, false, true, false, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_magic"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_MAGIC, *ATTACK_REGION_OBJECT);
             AttackModule::set_catch_only_all(agent.module_accessor, true, false);
         }
-        frame(agent.lua_state_agent, 29.0);
-        if macros::is_excute(agent) {
-            AttackModule::clear_all(agent.module_accessor);
-        }
+    }
+    frame(agent.lua_state_agent, 29.0);
+    if macros::is_excute(agent) {
+        AttackModule::clear_all(agent.module_accessor);
     }
 }
 
@@ -57,8 +57,14 @@ pub unsafe extern "C" fn is_tico_dead(boma: *mut BattleObjectModuleAccessor) -> 
 
 pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2CValue {
     if catch_attack_check_special(fighter) {
-        WorkModule::on_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
-        //println!("Request return");
+    }
+    return 0.into();
+}
+
+pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let to_return = catch_attack_main_inner(fighter);
+
+    if WorkModule::is_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
         if ArticleModule::is_exist(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO) {
             let tico_boma = get_article_boma(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO);
             
@@ -66,14 +72,17 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
             let tico_is_free = ArticleModule::is_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_FREE);
             let tico_status = StatusModule::status_kind(tico_boma);
             println!("Status: {tico_status} Free: {tico_is_free} Down: {tico_is_down}");
-            WorkModule::set_flag(fighter.module_accessor, (!tico_is_free && !tico_is_down), FIGHTER_ROSETTA_STATUS_CATCH_FLAG_STARPIECES);
             if tico_is_free {
+                println!("Request Return");
+                WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
                 ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, false, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_FREE);
                 ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_RETURN);
                 ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_CATCH_PARENT);
                 SoundModule::play_se(fighter.module_accessor, Hash40::new("se_rosetta_special_n03"), true, false, false, false, enSEType(0));
             }
             else if !tico_is_down {
+                println!("Request Bits");
+                WorkModule::on_flag(fighter.module_accessor, FIGHTER_ROSETTA_STATUS_CATCH_FLAG_STARPIECES);
                 let lr = PostureModule::lr(fighter.module_accessor);
                 //PostureModule::set_lr(tico_boma, lr);
                 ArticleModule::set_float(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, lr, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLOAT_TARGET_LR);
@@ -81,11 +90,12 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
                 SoundModule::play_se(fighter.module_accessor, Hash40::new("se_rosetta_special_s02"), true, false, false, false, enSEType(0));
             }
             else {
-
+                //return catch_attack_main_default(fighter);
             }
         }
     }
-    return 0.into();
+    
+    to_return
 }
 
 pub unsafe extern "C" fn catch_attack_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
@@ -113,7 +123,7 @@ pub fn install() {
         .acmd("effect_catchspecial", effect_catchspecial,Priority::Default)
         .acmd("sound_catchspecial", sound_catchspecial,Priority::Default)
         .acmd("expression_catchspecial", expression_catchspecial,Priority::Default)
-        .status(Init, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_init)
+        .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_uniq)
         .status(Exec, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_exec)
     .install();
     smashline::Agent::new("rosetta_starpiece")

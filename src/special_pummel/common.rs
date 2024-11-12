@@ -47,24 +47,38 @@ pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool
     return special_input && can_special;
 }
 
+pub unsafe fn catch_attack_check_special_anim(fighter: &mut L2CFighterCommon) -> bool {
+    let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
+    //println!("Special pummel has anim: {has_anim}");
+    return has_anim;
+}
+
+pub unsafe fn catch_attack_try_special_pummel(fighter: &mut L2CFighterCommon) -> bool {
+    if catch_attack_check_special(fighter) && catch_attack_check_special_anim(fighter) {
+        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
+        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
+        return true;
+    }
+    return false;
+}
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
+    WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
     if catch_attack_check_special(fighter) {
-        WorkModule::on_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
         ControlModule::clear_command(fighter.module_accessor, false);
-        let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
-        println!("Special pummel has anim: {has_anim}");
-        if has_anim {
+        
+        if catch_attack_check_special_anim(fighter) {
+            WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
+
             let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
             let mut clatter = ControlModule::get_clatter_time(opponent, 0);
             let pummels = WorkModule::get_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
             let clatter_t = ((pummels as f32) / (PUMMEL_PENALTY_COUNT_MIN as f32)).min(1.0);
             let clatter_factor = lerp(PUMMEL_MAX_PENALTY_FACTOR,1.0,clatter_t);
-            //println!("T: {clatter_t}. {clatter} x{clatter_factor}");
 
             ControlModule::set_clatter_time(opponent, clatter*clatter_factor,0);
 
             WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
-
+            println!("Special pummel");
             fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
             return fighter.sub_shift_status_main(L2CValue::Ptr(catch_special_main_loop as *const () as _))
         }
@@ -97,10 +111,15 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
                     next_status = FIGHTER_STATUS_KIND_ATTACK;
                 }
             }            
+            println!("New status: {}",*next_status);
             fighter.change_status(next_status.into(), false.into());
             return 1.into()
         }
     }
+    catch_attack_main_default(fighter)
+}
+
+pub unsafe extern "C" fn catch_attack_main_default(fighter: &mut L2CFighterCommon) -> L2CValue {
     WorkModule::inc_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
     fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")))
 }
@@ -122,10 +141,6 @@ pub unsafe extern "C" fn catch_special_main_loop(fighter: &mut L2CFighterCommon)
     return fighter.status_CatchAttack_Main();
 }
 
-pub unsafe extern "C" fn catch_attack_main_default(fighter: &mut L2CFighterCommon) -> L2CValue {
-    WorkModule::inc_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
-    fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")))
-}
 
 #[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_attack_mtrans_post_process)]
 unsafe extern "C" fn attack_mtrans_pre_process(fighter: &mut L2CFighterCommon) {
