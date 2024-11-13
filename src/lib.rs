@@ -36,6 +36,7 @@ use smashline::*;
 //mod hero_skill;
 //mod burst;
 mod special_pummel;
+mod pikmin_idle;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -52,6 +53,7 @@ pub fn smashline_uninstall() {
 pub fn install() {
     println!("Loading memes");
     crate::special_pummel::install();
+    //crate::pikmin_idle::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");

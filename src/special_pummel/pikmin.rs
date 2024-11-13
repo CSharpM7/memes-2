@@ -55,6 +55,7 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
     let pikmin_id = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_OBJECT_ID_0+p) as u32;
     if pikmin_id == 0 {
         FighterSpecializer_Pikmin::liberty_pikmin_all(olima);
+        //FighterSpecializer_Pikmin::reduce_pikmin_all(olima); //apparently this fucks shit up
         println!("No id");
         return false;
     }
@@ -65,6 +66,10 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
     //p[0] is tossed, any others arent
     if is_link & 1 != 0  {
         println!("Toss em");
+        let pikmin_boma = sv_battle_object::module_accessor(pikmin_id as u32);
+        let p_situation = //StatusModule::situation_kind(pikmin_boma);
+        if WorkModule::get_int64(fighter.module_accessor, *FIGHTER_STATUS_APPEAL_WORK_INT_MOTION_KIND_R) as u64 == hash40("appeal_hi_r") 
+        {*SITUATION_KIND_AIR} else {*SITUATION_KIND_GROUND};
         /*
         let mut link_event = FighterPikminLinkEventWeaponPikminConstraint__new_l2c_table();
         link_event["link_event_kind_"].assign(&L2CValue::Hash40(Hash40::new("fighter_pikmin_link_event_weapon_pikmin_constraint")));
@@ -97,7 +102,11 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
         LinkModule::set_attribute(fighter.module_accessor, link_node, LinkAttribute{_address: *LINK_ATTRIBUTE_REFERENCE_PARENT_STOP as u8}, true);
         LinkModule::set_attribute(fighter.module_accessor, link_node, LinkAttribute{_address: *LINK_ATTRIBUTE_REFERENCE_PARENT_ATTACK_STOP as u8}, true);
 
-        let new_status = *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S;
+        //PostureModule::set_lr(pikmin_boma,lr);
+        //PostureModule::update_rot_y_lr(pikmin_boma);
+
+        //WEAPON_PIKMIN_PIKMIN_STATUS_KIND_ATTACK_LW4 doesnt tell the pikmin to follow olimar again
+        let new_status = if p_situation == *SITUATION_KIND_GROUND {*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_ATTACK_LW4} else {*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S};
         let mut link_event = FighterPikminLinkEventWeaponPikminChangeStatus__new_l2c_table();
         link_event["link_event_kind_"].assign(&L2CValue::Hash40(Hash40::new("fighter_pikmin_link_event_weapon_pikmin_change_status")));
         link_event["status_kind_"].assign(&L2CValue::I32(new_status));
@@ -105,7 +114,6 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
         link_event["sender_id_"].assign(&L2CValue::U32(object_id));
         link_event_store_l2c_table(fighter, link_node.into(), link_event);
         
-        FighterSpecializer_Pikmin::reduce_pikmin_all(olima);
         LinkModule::unlink(fighter.module_accessor, link_node);
         return true;
     }
@@ -142,19 +150,12 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
         println!("{p} < {iVar14} ? ");
         if !bVar3 {break;}
         
-        FighterSpecializer_Pikmin::hold_pikmin(olima, 1);
+        FighterSpecializer_Pikmin::hold_pikmin(olima, 3);
         FighterSpecializer_Pikmin::update_hold_pikmin_param(olima);
         p=p+1;
     }
     //LinkModule::unlink(fighter.module_accessor, *FIGHTER_PIKMIN_LINK_NO_PIKMIN);
     println!("End loop");
-    //let lead_pikmin_id = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_OBJECT_ID_0) as u32;
-    if lead_pikmin_id == OBJECT_ID_NULL || !sv_battle_object::is_active(lead_pikmin_id) {
-        println!("no lead");
-        return 0.into();
-    }
-    let lead_pikmin_boma = sv_battle_object::module_accessor(lead_pikmin_id as u32);
-    //somethin about motion rate and what not
 
     0.into()
 }
