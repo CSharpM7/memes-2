@@ -72,22 +72,43 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
             let tico_is_free = ArticleModule::is_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_FREE);
             let tico_status = StatusModule::status_kind(tico_boma);
             println!("Status: {tico_status} Free: {tico_is_free} Down: {tico_is_down}");
+
+            let lr = PostureModule::lr(fighter.module_accessor);
+            if !tico_is_down {
+                ArticleModule::set_float(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, lr, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLOAT_TARGET_LR);
+            }
             if tico_is_free {
                 println!("Request Return");
-                WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
-                ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, false, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_FREE);
-                ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_RETURN);
-                ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_CATCH_PARENT);
                 SoundModule::play_se(fighter.module_accessor, Hash40::new("se_rosetta_special_n03"), true, false, false, false, enSEType(0));
+
+                WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
+                //Return
+                ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, false, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_FREE);
+                //ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_RETURN);
+                //ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_CATCH_PARENT);
+
+                //Warp
+                let rosa_pos = *PostureModule::pos(fighter.module_accessor);
+                let hip_pos = &mut Vector3f{ x: 0.0, y: 0.0, z: 0.0 };
+                ModelModule::joint_global_position(fighter.module_accessor, Hash40::new("hip"), hip_pos, false);
+                let target_x = rosa_pos.x + (lr*-3.0);
+                let target_y = hip_pos.y;
+                let target_z = hip_pos.z;
+                //ArticleModule::set_float(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, 0.0, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLOAT_TARGET_LENGTH);
+                ArticleModule::set_float(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, target_x, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLOAT_TARGET_X);
+                ArticleModule::set_float(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, target_y, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLOAT_TARGET_Y);
+                ArticleModule::set_float(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, target_z, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLOAT_TARGET_Z);
+                ArticleModule::change_status_exist(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO,*WEAPON_ROSETTA_TICO_STATUS_KIND_WARP);
+                PostureModule::set_lr(tico_boma, lr);
             }
             else if !tico_is_down {
                 println!("Request Bits");
-                WorkModule::on_flag(fighter.module_accessor, FIGHTER_ROSETTA_STATUS_CATCH_FLAG_STARPIECES);
-                let lr = PostureModule::lr(fighter.module_accessor);
-                //PostureModule::set_lr(tico_boma, lr);
-                ArticleModule::set_float(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, lr, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLOAT_TARGET_LR);
-                ArticleModule::change_status_exist(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO,*WEAPON_ROSETTA_TICO_STATUS_KIND_SPECIAL_S);
                 SoundModule::play_se(fighter.module_accessor, Hash40::new("se_rosetta_special_s02"), true, false, false, false, enSEType(0));
+
+                WorkModule::on_flag(fighter.module_accessor, FIGHTER_ROSETTA_STATUS_CATCH_FLAG_STARPIECES);
+                //PostureModule::set_lr(tico_boma, lr);
+                ArticleModule::change_status_exist(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO,*WEAPON_ROSETTA_TICO_STATUS_KIND_SPECIAL_S);
+                PostureModule::set_lr(tico_boma, lr);
             }
             else {
                 WorkModule::off_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
