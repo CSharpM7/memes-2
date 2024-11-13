@@ -59,7 +59,7 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
     let mut p = 0;
     let mut lead_pikmin_id = OBJECT_ID_NULL;
     loop {
-        let pikmin_id = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_OBJECT_ID_0+p) as u32;//+p?
+        let pikmin_id = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_OBJECT_ID_0) as u32;//+p?
         if p == 0 {
             lead_pikmin_id = pikmin_id;
         }
@@ -67,6 +67,7 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
 
         let is_link = LinkModule::link(fighter.module_accessor, link_node, pikmin_id as u32);
         println!("Throw Pikmin #{p}: {pikmin_id} ?") ;
+        //p[0] is tossed, any others arent
         if is_link & 1 != 0 {
             println!("Toss em");
             /*
