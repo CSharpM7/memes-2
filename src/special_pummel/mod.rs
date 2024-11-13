@@ -21,6 +21,11 @@ mod tantan;
 mod common;
 
 pub fn install() {
+    common::install();
+    
+    #[cfg(feature = "devhook")]
+    return;
+    
     edge::install();
     gaogaen::install();
     koopa::install();
@@ -32,7 +37,6 @@ pub fn install() {
     rosetta::install();
     snake::install();
     tantan::install();
-    common::install();
 }
 
 pub fn uninstall() {
