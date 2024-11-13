@@ -82,8 +82,9 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
                 SoundModule::play_se(fighter.module_accessor, Hash40::new("se_rosetta_special_n03"), true, false, false, false, enSEType(0));
 
                 WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
-                //Return
                 ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, false, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_FREE);
+                
+                //Return
                 //ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_RETURN);
                 //ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_CATCH_PARENT);
 
