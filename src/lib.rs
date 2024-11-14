@@ -36,7 +36,7 @@ use smashline::*;
 //mod hero_skill;
 //mod burst;
 mod special_pummel;
-mod pikmin_idle;
+mod pikmin_charge;
 
 mod imports;
 use crate::imports::imports_agent::*;
