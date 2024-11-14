@@ -3,7 +3,7 @@ use crate::imports::imports_status::*;
 use crate::special_pummel::imports::*;
 
 pub const FIGHTER_POPO_STATUS_THROW_FLAG_STALL: i32 = 0x2100000E;
-pub const FIGHTER_POPO_STATUS_THROW_FLAG_HAS_NANA: i32 = 0x2100000F;
+pub const FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER: i32 = 0x2100000F;
 pub const FIGHTER_POPO_STATUS_THROW_WORK_INT_STATE: i32 = 0x11000004;
 
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
@@ -21,6 +21,7 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 18.0);
     if macros::is_excute(agent) {
         WorkModule::off_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_STALL);
+        WorkModule::on_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER);
         AttackModule::clear_all(agent.module_accessor);
     }
     frame(agent.lua_state_agent, 22.0);
@@ -53,14 +54,15 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
 }
 
 unsafe extern "C" fn effect_catchspecial(agent: &mut L2CAgentBase) {
-    frame(agent.lua_state_agent, 6.0);
+    frame(agent.lua_state_agent, 4.0);
     if macros::is_excute(agent) {
-        macros::EFFECT(agent, Hash40::new("popo_iceshot_appear"), Hash40::new("havel"), 0.0, 8.0, 0, 0, 0, 0, 0.6, 0, 0, 0, 0, 0, 0, true);
+        macros::EFFECT(agent, Hash40::new("popo_iceshot_appear"), Hash40::new("havel"), 0.0, 8.0, 0, 0, 0, 0, 1.2, 0, 0, 0, 0, 0, 0, true);
     }
-    wait(agent.lua_state_agent, 1.0);
+    wait(agent.lua_state_agent, 2.0);
     if macros::is_excute(agent) {
         macros::EFFECT_FOLLOW(agent, Hash40::new("sys_ice"), Hash40::new("havel"), 1.0, 8.0, 0.0, 0, 0, -90, 0.37, true);
     }
+
     frame(agent.lua_state_agent, 22.0);
     if macros::is_excute(agent) {
         macros::FOOT_EFFECT(agent, Hash40::new("sys_atk_smoke"), Hash40::new("top"), -4, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, false);
@@ -89,7 +91,7 @@ unsafe extern "C" fn sound_catchspecial(agent: &mut L2CAgentBase) {
         {Hash40::new("vc_popo_attack01")} else {Hash40::new("vc_nana_attack01")};
         macros::PLAY_SE(agent, vc);
     }
-    frame(agent.lua_state_agent, 6.0);
+    frame(agent.lua_state_agent, 4.0);
     if macros::is_excute(agent) {
         macros::PLAY_SE(agent, Hash40::new("se_popo_special_n02"));
     }
@@ -118,6 +120,43 @@ unsafe extern "C" fn expression_catchspecial(agent: &mut L2CAgentBase) {
     }
 }
 
+unsafe extern "C" fn game_catchspecial_nana(agent: &mut L2CAgentBase) {
+    if macros::is_excute(agent) {
+        println!("Yo?");
+    }
+}
+
+unsafe extern "C" fn effect_catchspecial_nana(agent: &mut L2CAgentBase) {
+    frame(agent.lua_state_agent, 16.0);
+    if macros::is_excute(agent) {
+        macros::EFFECT_FOLLOW(agent, Hash40::new("popo_blizzerd_shoot"), Hash40::new("top"), 0, 5, 7, 0, 0, 0, 1, true);
+    }
+}
+
+unsafe extern "C" fn sound_catchspecial_nana(agent: &mut L2CAgentBase) {
+    frame(agent.lua_state_agent, 16.0);
+    if macros::is_excute(agent) {
+        let vc = if !WorkModule::is_flag(agent.module_accessor, *FIGHTER_POPO_INSTANCE_WORK_ID_FLAG_MAIN_FIGHTER_NANA)
+        {Hash40::new("vc_popo_attack04")} else {Hash40::new("vc_nana_attack04")};
+        macros::PLAY_SE(agent, vc);
+        macros::PLAY_SE(agent, Hash40::new("se_popo_special_l01"));
+    }
+}
+
+unsafe extern "C" fn expression_catchspecial_nana(agent: &mut L2CAgentBase) {
+    if macros::is_excute(agent) {
+        slope!(agent, *MA_MSC_CMD_SLOPE_SLOPE_INTP, *SLOPE_STATUS_L, 4);
+        ItemModule::set_have_item_visibility(agent.module_accessor, false, 0);
+    }
+    frame(agent.lua_state_agent, 16.0);
+    if macros::is_excute(agent) {
+        ControlModule::set_rumble(agent.module_accessor, Hash40::new("rbkind_elecattack"), 40, true, *BATTLE_OBJECT_ID_INVALID as u32);
+    }
+    frame(agent.lua_state_agent, 76.0);
+    if macros::is_excute(agent) {
+        ItemModule::set_have_item_visibility(agent.module_accessor, true, 0);
+    }
+}
 /*
 STATUS
 */
@@ -126,33 +165,37 @@ pub unsafe fn is_nana_near(fighter: &mut L2CFighterCommon) -> bool {
     fighter.clear_lua_stack();
     lua_args!(fighter, Hash40::new_raw(0x290fb81a9f), dist);
     sv_battle_object::notify_event_msc_cmd(fighter.lua_state_agent);
-    return fighter.pop_lua_stack(1).get_bool(); 
+    let is_far = fighter.pop_lua_stack(1).get_bool(); 
+    if !is_far {
+        //println!("C: Partner too far?"); 
+        return false;}
+
+    return true;
 }
 
 pub unsafe fn is_nana_available(fighter: &mut L2CFighterCommon) -> bool {
     let mut bVar2 = true;
-
     fighter.clear_lua_stack();
     lua_args!(fighter, Hash40::new_raw(0x253ce36631));
     sv_battle_object::notify_event_msc_cmd(fighter.lua_state_agent);
     bVar2 = fighter.pop_lua_stack(1).get_bool();
     if !bVar2 {
-        //println!("A: Partner dead"); 
-    return false;}
-    
+        println!("A: Partner dead"); 
+        return false;}
+
     fighter.clear_lua_stack();
     lua_args!(fighter, Hash40::new_raw(0x2ac2788592));
     sv_battle_object::notify_event_msc_cmd(fighter.lua_state_agent);
     bVar2 = fighter.pop_lua_stack(1).get_bool();
     if !bVar2 {
-        //println!("B: Partner unreachable?"); 
+        println!("B: Partner unreachable?"); 
         return false;}
 
     bVar2 = is_nana_near(fighter);
     if !bVar2 {
-        //println!("C: Partner too far?"); 
+        println!("C: Partner too far?"); 
     return false;}
-
+    
     return true;
 }
 
@@ -160,6 +203,7 @@ pub unsafe fn catch_attack_uniq_default(fighter: &mut L2CFighterCommon) -> L2CVa
     fighter.change_status(FIGHTER_STATUS_KIND_THROW.into(), false.into());
     return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
 }
+
 pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     let is_nana = WorkModule::is_flag(fighter.module_accessor, *FIGHTER_INSTANCE_WORK_ID_FLAG_SUB_FIGHTER);
     //println!("Catch attack: {is_nana}");
@@ -167,7 +211,7 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
 
         if !is_nana_available(fighter) {return catch_attack_uniq_default(fighter);}
         if !LinkModule::is_link(fighter.module_accessor, *FIGHTER_POPO_LINK_NO_PARTNER) {return catch_attack_uniq_default(fighter);}
-        
+
         //NANA VARS
         let partner_id = LinkModule::get_node_object_id(fighter.module_accessor, *FIGHTER_POPO_LINK_NO_PARTNER) as u32;
         let partner_boma = sv_battle_object::module_accessor(partner_id);
@@ -222,8 +266,9 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
         MotionModule::change_motion(fighter.module_accessor,motion, frame, rate, false, 0.0, false, false);
 
         if !is_nana {
+            WorkModule::off_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER);
             WorkModule::set_int(fighter.module_accessor, 0, FIGHTER_POPO_STATUS_THROW_WORK_INT_STATE);
-            return fighter.sub_shift_status_main(L2CValue::Ptr(throw_main_loop_uniq as *const () as _));
+            return fighter.sub_shift_status_main(L2CValue::Ptr(throw_sp_main_loop as *const () as _));
         }
     }
     else {
@@ -232,7 +277,26 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
     fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_Throw_Main as *const () as _))
 }
 
-unsafe extern "C" fn throw_main_loop_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
+unsafe extern "C" fn throw_sp_main_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
+    if CatchModule::is_catch(fighter.module_accessor)
+    && !WorkModule::is_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER) {
+        let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
+        let mut clatter = ControlModule::get_clatter_time(opponent, 0);
+        //println!("Clatter: {clatter}");
+        if clatter <= 0.0 {
+            fighter.change_status(FIGHTER_STATUS_KIND_CATCH_CUT.into(),false.into());
+            StatusModule::change_status_request(opponent, *FIGHTER_STATUS_KIND_CAPTURE_JUMP, false);
+            if is_nana_near(fighter) {
+                let partner_id = LinkModule::get_node_object_id(fighter.module_accessor, *FIGHTER_POPO_LINK_NO_PARTNER) as u32;
+                let partner_boma = sv_battle_object::module_accessor(partner_id);
+                if StatusModule::status_kind(partner_boma) == *FIGHTER_STATUS_KIND_THROW {
+                    SoundModule::stop_se_all(partner_boma, 0,false,false);
+                    StatusModule::change_status_request(partner_boma, *FIGHTER_STATUS_KIND_CATCH_CUT, false);
+                }
+            }
+        }
+    }
+
     let mut state = WorkModule::get_int(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_WORK_INT_STATE);
     if WorkModule::is_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_STALL) 
     && state < 2 {
@@ -282,9 +346,11 @@ pub fn install_helper(agent: &mut smashline::Agent, article: i32) {
         agent.acmd("effect_catchspecial", effect_catchspecial,Priority::Default);
         agent.acmd("sound_catchspecial", sound_catchspecial,Priority::Default);
         agent.acmd("expression_catchspecial", expression_catchspecial,Priority::Default);
-    }
-    else if article == *WEAPON_KIND_POPO_BLIZZARD {
-        //agent.status(Init, *WEAPON_POPO_BLIZZARD_STATUS_KIND_DUMMY, bliz_init);
+
+        agent.acmd("game_catchspecial_nana", game_catchspecial_nana,Priority::Default);
+        agent.acmd("effect_catchspecial_nana", effect_catchspecial_nana,Priority::Default);
+        agent.acmd("sound_catchspecial_nana", sound_catchspecial_nana,Priority::Default);
+        agent.acmd("expression_catchspecial_nana", expression_catchspecial_nana,Priority::Default);
     }
 
     agent.install();
@@ -292,10 +358,6 @@ pub fn install_helper(agent: &mut smashline::Agent, article: i32) {
 pub fn install() {   
     let popo = &mut Agent::new("popo");
     let nana = &mut Agent::new("nana");
-    let p_blizzard = &mut Agent::new("popo_blizzard");
-    let n_blizzard = &mut Agent::new("nana_blizzard");
     install_helper(popo,*FIGHTER_KIND_POPO);
     install_helper(nana,*FIGHTER_KIND_NANA);
-    install_helper(p_blizzard,*WEAPON_KIND_POPO_BLIZZARD);
-    install_helper(n_blizzard,*WEAPON_KIND_POPO_BLIZZARD);
 }

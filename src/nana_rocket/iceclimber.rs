@@ -316,16 +316,16 @@ pub fn install_helper(agent: &mut smashline::Agent) {
     agent.acmd("sound_specials1",sound_specials1);
     agent.acmd("sound_specialairs1",sound_specials1);
 
-    agent.acmd("game_specials2nana",empty_acmd);
-    agent.acmd("effect_specials2nana",empty_acmd);
-    agent.acmd("sound_specials2nana",empty_acmd);
+    agent.acmd("game_specials2_nana",empty_acmd);
+    agent.acmd("effect_specials2_nana",empty_acmd);
+    agent.acmd("sound_specials2_nana",empty_acmd);
 
-    agent.acmd("game_specialairs2nana",game_specialairs2nana);
+    agent.acmd("game_specialairs2_nana",game_specialairs2nana);
     agent.acmd("game_specialairs2",game_specialairs2nana);
     agent.acmd("effect_specialairs2",effect_specialairs2nana);
-    agent.acmd("effect_specialairs2nana",effect_specialairs2nana);
+    agent.acmd("effect_specialairs2_nana",effect_specialairs2nana);
     agent.acmd("sound_specialairs2",sound_specialairs2nana);
-    agent.acmd("sound_specialairs2nana",sound_specialairs2nana);
+    agent.acmd("sound_specialairs2_nana",sound_specialairs2nana);
     
     agent.status(Main, *FIGHTER_STATUS_KIND_SPECIAL_S, special_s1_main);
     agent.status(Exec, *FIGHTER_STATUS_KIND_SPECIAL_S, empty_status);
