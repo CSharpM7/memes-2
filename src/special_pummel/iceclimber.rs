@@ -6,32 +6,39 @@ pub const FIGHTER_POPO_STATUS_THROW_FLAG_STALL: i32 = 0x2100000E;
 pub const FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER: i32 = 0x2100000F;
 pub const FIGHTER_POPO_STATUS_THROW_WORK_INT_STATE: i32 = 0x11000004;
 
-unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
+unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {  
+    let damage = 6.0;
+    let angle: u64 = 45;
+    let kbg = 60;
+    let bkb = 30;
     if macros::is_excute(agent) {
-        macros::ATTACK_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_THROW, 0, 3.0, 0, 0, 10, 20, 0.0, 1.0, *ATTACK_LR_CHECK_B, 0.0, true, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_NONE, *ATTACK_REGION_THROW);
-        macros::ATTACK_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_CATCH, 0, 3.0, 361, 100, 0, 40, 0.0, 1.0, *ATTACK_LR_CHECK_F, 0.0, true, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_NONE, *ATTACK_REGION_THROW);
+        macros::ATTACK_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_THROW, 0, damage, angle, kbg, 0, bkb, 0.0, 1.0, *ATTACK_LR_CHECK_F, 0.0, true, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_NONE, *ATTACK_REGION_THROW);
+        macros::ATTACK_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_CATCH, 0, 3.0, 361, 100, 0, 40, 0.0, 1.0, *ATTACK_LR_CHECK_F, 0.0, true, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_PUNCH, *ATTACK_REGION_THROW);
     }
     frame(agent.lua_state_agent, 10.0);
-    //FT_MOTION_RATE_RANGE(agent,10.0,18.0,20.0);
     if macros::is_excute(agent) {
         WorkModule::on_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_STALL);
-        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 0.75, 366, 0, 10,50, 5.0, 0.0, 6.5, 10.0, None, None, None, 0.0, 0.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 4, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_FREEZE, *ATTACK_REGION_HAMMER);
-        AttackModule::set_catch_only_all(agent.module_accessor, true, false);
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 0.75, 366, 0, 10,50, 5.0, 0.0, 6.5, 10.0, None, None, None, 0.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 4, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_FREEZE, *ATTACK_REGION_HAMMER);
+        //AttackModule::set_catch_only_all(agent.module_accessor, true, false);
         AttackModule::set_no_uniq_effect_all(agent.module_accessor, true, false);
     }
-    frame(agent.lua_state_agent, 18.0);
+    frame(agent.lua_state_agent, 19.0);
     if macros::is_excute(agent) {
         WorkModule::off_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_STALL);
         WorkModule::on_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER);
         AttackModule::clear_all(agent.module_accessor);
     }
-    frame(agent.lua_state_agent, 22.0);
+    frame(agent.lua_state_agent, 24.0);
     if macros::is_excute(agent) {
         macros::CHECK_FINISH_CAMERA(agent, 16, 9);
         lua_bind::FighterCutInManager::set_throw_finish_zoom_rate(singletons::FighterCutInManager(), 1.5);
         lua_bind::FighterCutInManager::set_throw_finish_offset(singletons::FighterCutInManager(), Vector3f{x: 0.0, y: 0.0, z: 0.0});
     }
     wait(agent.lua_state_agent, 1.0);
+    if macros::is_excute(agent) {      
+        macros::ATTACK_IGNORE_THROW(agent, 2, 0, Hash40::new("top"), damage, angle, kbg, 0, bkb, 5.0, 0.0, 6.5, 10.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_PUNCH, *ATTACK_REGION_HAMMER);
+    }
+    //wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
         let target = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_OBJECT);
         let target_group = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_HIT_GROUP);
@@ -39,15 +46,6 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
         macros::ATK_HIT_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_THROW, Hash40::new("throw"), target, target_group, target_no);
     }
     wait(agent.lua_state_agent, 1.0);
-    if macros::is_excute(agent) {        
-        let damage = 6.0;
-        let angle: u64 = 45;
-        let kbg = 65;
-        let bkb = 25;
-        AttackModule::set_ice_frame_mul(agent.module_accessor, 2, 0.75, false);
-        macros::ATTACK(agent, 2, 0, Hash40::new("top"), damage, angle, kbg, 0, bkb, 5.0, 0.0, 6.5, 10.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_PUNCH, *ATTACK_REGION_HAMMER);
-    }
-    wait(agent.lua_state_agent, 2.0);
     if macros::is_excute(agent) {
         AttackModule::clear_all(agent.module_accessor);
     }
@@ -320,7 +318,7 @@ unsafe extern "C" fn throw_sp_main_loop(fighter: &mut L2CFighterCommon) -> L2CVa
         }
         let has_nana = is_nana_near(fighter);
         if has_nana {
-            let rate = 1.0/(20.0 / (18.0 - 10.0));
+            let rate = 1.0/(20.0 / (19.0 - 10.0));
             MotionModule::set_rate(fighter.module_accessor, rate);
             WorkModule::set_float(fighter.module_accessor, rate, *FIGHTER_STATUS_THROW_WORK_FLOAT_MOTION_RATE);
         }
