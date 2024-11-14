@@ -15,8 +15,9 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     //FT_MOTION_RATE_RANGE(agent,10.0,18.0,20.0);
     if macros::is_excute(agent) {
         WorkModule::on_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_STALL);
-        macros::ATTACK(agent, 1, 0, Hash40::new("top"), 0.3, 366, 0, 10,50, 5.0, 0.0, 6.5, 10.0, None, None, None, 0.0, 0.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 4, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_FREEZE, *ATTACK_REGION_HAMMER);
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 0.75, 366, 0, 10,50, 5.0, 0.0, 6.5, 10.0, None, None, None, 0.0, 0.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 4, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_FREEZE, *ATTACK_REGION_HAMMER);
         AttackModule::set_catch_only_all(agent.module_accessor, true, false);
+        AttackModule::set_no_uniq_effect_all(agent.module_accessor, true, false);
     }
     frame(agent.lua_state_agent, 18.0);
     if macros::is_excute(agent) {
@@ -36,7 +37,6 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
         let target_group = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_HIT_GROUP);
         let target_no = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_HIT_NO);
         macros::ATK_HIT_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_THROW, Hash40::new("throw"), target, target_group, target_no);
-        AttackModule::clear_all(agent.module_accessor);
     }
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {        
@@ -54,17 +54,28 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
 }
 
 unsafe extern "C" fn effect_catchspecial(agent: &mut L2CAgentBase) {
-    frame(agent.lua_state_agent, 4.0);
     if macros::is_excute(agent) {
-        macros::EFFECT(agent, Hash40::new("popo_iceshot_appear"), Hash40::new("havel"), 0.0, 8.0, 0, 0, 0, 0, 1.2, 0, 0, 0, 0, 0, 0, true);
+        macros::EFFECT(agent, Hash40::new("sys_ice_landing"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, true);
+    }
+    frame(agent.lua_state_agent, 6.0);
+    if macros::is_excute(agent) {
+        //macros::EFFECT(agent, Hash40::new("popo_iceshot_appear"), Hash40::new("havel"), 0.0, 8.0, 0, 0, 0, 0, 1.2, 0, 0, 0, 0, 0, 0, true);
+        macros::EFFECT(agent, Hash40::new("popo_iceshot_smash"), Hash40::new("havel"), 1.0, 8.0, 0.0, 0, 0, -90, 0.8, 0, 0, 0, 0, 0, 0, true);
+    
+        macros::EFFECT_FOLLOW_NO_STOP(agent, Hash40::new("popo_iceshot_cold_a"), Hash40::new("top"), 0.0, 8.0, 0, 0, 0, 0, 0.8, true);
     }
     wait(agent.lua_state_agent, 2.0);
     if macros::is_excute(agent) {
         macros::EFFECT_FOLLOW(agent, Hash40::new("sys_ice"), Hash40::new("havel"), 1.0, 8.0, 0.0, 0, 0, -90, 0.37, true);
     }
-
+    
+    frame(agent.lua_state_agent, 18.0);
+    if macros::is_excute(agent) {
+        EFFECT_OFF_KIND(agent,Hash40::new("popo_iceshot_cold_a"),false,false);
+    }
     frame(agent.lua_state_agent, 22.0);
     if macros::is_excute(agent) {
+        EFFECT_OFF_KIND(agent,Hash40::new("popo_iceshot_cold_a"),false,false);
         macros::FOOT_EFFECT(agent, Hash40::new("sys_atk_smoke"), Hash40::new("top"), -4, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, false);
     }
     frame(agent.lua_state_agent, 23.0);
@@ -91,7 +102,7 @@ unsafe extern "C" fn sound_catchspecial(agent: &mut L2CAgentBase) {
         {Hash40::new("vc_popo_attack01")} else {Hash40::new("vc_nana_attack01")};
         macros::PLAY_SE(agent, vc);
     }
-    frame(agent.lua_state_agent, 4.0);
+    frame(agent.lua_state_agent, 6.0);
     if macros::is_excute(agent) {
         macros::PLAY_SE(agent, Hash40::new("se_popo_special_n02"));
     }
@@ -209,6 +220,10 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
     //println!("Catch attack: {is_nana}");
     if !is_nana && catch_attack_check_special(fighter) {
 
+        //DEFAULT POPO STUFF
+        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
+        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
+
         if !is_nana_available(fighter) {return catch_attack_uniq_default(fighter);}
         if !LinkModule::is_link(fighter.module_accessor, *FIGHTER_POPO_LINK_NO_PARTNER) {return catch_attack_uniq_default(fighter);}
 
@@ -220,13 +235,10 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
         PostureModule::set_pos(partner_boma, &Vector3f{x:pos.x+(3.0*-lr),y:pos.y,z:pos.z});
         PostureModule::set_lr(partner_boma, lr);
         PostureModule::update_rot_y_lr(partner_boma);
+        WorkModule::on_flag(partner_boma, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
         
         let partner_next_status = FIGHTER_STATUS_KIND_THROW;
 
-        //DEFAULT POPO STUFF
-        WorkModule::on_flag(partner_boma, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
         
         //DEFAULT NANA STUFF
         fighter.clear_lua_stack();
@@ -281,6 +293,8 @@ unsafe extern "C" fn throw_sp_main_loop(fighter: &mut L2CFighterCommon) -> L2CVa
     if CatchModule::is_catch(fighter.module_accessor)
     && !WorkModule::is_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER) {
         let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
+        let rate = WorkModule::get_float(fighter.module_accessor,*FIGHTER_STATUS_THROW_WORK_FLOAT_MOTION_RATE);
+        MotionModule::set_rate(opponent, rate);
         let mut clatter = ControlModule::get_clatter_time(opponent, 0);
         //println!("Clatter: {clatter}");
         if clatter <= 0.0 {
@@ -315,7 +329,7 @@ unsafe extern "C" fn throw_sp_main_loop(fighter: &mut L2CFighterCommon) -> L2CVa
             WorkModule::set_float(fighter.module_accessor, 1.0, *FIGHTER_STATUS_THROW_WORK_FLOAT_MOTION_RATE);
             WorkModule::off_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_STALL);
             WorkModule::set_int(fighter.module_accessor, 2, FIGHTER_POPO_STATUS_THROW_WORK_INT_STATE);
-            AttackModule::clear(fighter.module_accessor, 1, false);
+            AttackModule::clear_all(fighter.module_accessor);
         }
     }
     else if state == 1 {
