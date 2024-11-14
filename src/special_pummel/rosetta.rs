@@ -56,7 +56,7 @@ pub unsafe extern "C" fn is_tico_dead(boma: *mut BattleObjectModuleAccessor) -> 
 }
 
 pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2CValue {
-    if catch_attack_check_special(fighter) {
+    if catch_attack_check_special_input(fighter) {
     }
     return 0.into();
 }
@@ -83,7 +83,7 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
 
                 WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
                 ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, false, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_FREE);
-                
+
                 //Return
                 //ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_RETURN);
                 //ArticleModule::set_flag(fighter.module_accessor, *FIGHTER_ROSETTA_GENERATE_ARTICLE_TICO, true, *WEAPON_ROSETTA_TICO_INSTANCE_WORK_ID_FLAG_CATCH_PARENT);

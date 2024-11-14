@@ -53,7 +53,7 @@ pub unsafe extern "C" fn agent_start(fighter: &mut L2CFighterCommon)
 }
 
 // STATUS HELPERS
-pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool {
+pub unsafe fn catch_attack_check_special_input(fighter: &mut L2CFighterCommon) -> bool {
     let special_input = ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL)
     || ControlModule::check_button_on(fighter.module_accessor, *CONTROL_PAD_BUTTON_SPECIAL_RAW);
     let can_special = !WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL);
@@ -67,13 +67,8 @@ pub unsafe fn catch_attack_check_special_anim(fighter: &mut L2CFighterCommon) ->
     return has_anim;
 }
 
-pub unsafe fn catch_attack_try_special_pummel(fighter: &mut L2CFighterCommon) -> bool {
-    if catch_attack_check_special(fighter) && catch_attack_check_special_anim(fighter) {
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
-        return true;
-    }
-    return false;
+pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool {
+    return catch_attack_check_special_input(fighter) && catch_attack_check_special_anim(fighter);
 }
 
 // STATUS
@@ -84,13 +79,13 @@ unsafe fn status_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
 pub unsafe extern "C" fn catch_attack_main_new(fighter: &mut L2CFighterCommon, call_original_first: bool) -> L2CValue {
     if call_original_first {
         let original = smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_CATCH_ATTACK)(fighter);
-        if catch_attack_check_special(fighter) {
+        if catch_attack_check_special_input(fighter) {
             return catch_attack_main_inner(fighter);
         }
         return original;
     }
     else {
-        if catch_attack_check_special(fighter) {
+        if catch_attack_check_special_input(fighter) {
             return catch_attack_main_inner(fighter);
         }
         return smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_CATCH_ATTACK)(fighter);
@@ -98,9 +93,11 @@ pub unsafe extern "C" fn catch_attack_main_new(fighter: &mut L2CFighterCommon, c
 }
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
     WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
-    if catch_attack_check_special(fighter) {
+    if catch_attack_check_special_input(fighter) {
         ControlModule::clear_command(fighter.module_accessor, false);
-        
+        let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
+        let pummel_if_no_anim = [*FIGHTER_KIND_POPO,*FIGHTER_KIND_NANA,*FIGHTER_KIND_TANTAN].contains(&fighter_kind);
+
         if catch_attack_check_special_anim(fighter) {
             WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
             WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
@@ -114,9 +111,8 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
             fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
             return fighter.sub_shift_status_main(L2CValue::Ptr(catch_special_main_loop as *const () as _))
         }
-        else {
-            let mut next_status = FIGHTER_STATUS_KIND_ATTACK;
-            let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
+        else if !pummel_if_no_anim {
+            let mut next_status = FIGHTER_STATUS_KIND_WAIT;
 
             if [*FIGHTER_KIND_PFUSHIGISOU,*FIGHTER_KIND_WOLF]
             .contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_SPECIAL_N;}
