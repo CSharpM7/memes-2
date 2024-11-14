@@ -36,6 +36,7 @@ pub unsafe extern "C" fn change_status_callback(fighter: &mut L2CFighterCommon) 
     
     if ![*FIGHTER_STATUS_KIND_ATTACK,*FIGHTER_STATUS_KIND_ATTACK_100].contains(&status_kind_next)
     && ![*FIGHTER_STATUS_KIND_THROW,*FIGHTER_STATUS_KIND_THROW_KIRBY].contains(&status_kind_next)
+    && (status_kind != *FIGHTER_STATUS_KIND_CATCH_ATTACK && status_kind_next != *FIGHTER_STATUS_KIND_CATCH_ATTACK)
     {
         WorkModule::off_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
         
@@ -61,10 +62,14 @@ pub unsafe fn catch_attack_check_special_input(fighter: &mut L2CFighterCommon) -
     return special_input && can_special;
 }
 
-pub unsafe fn catch_attack_check_special_anim(fighter: &mut L2CFighterCommon) -> bool {
-    let has_anim = MotionModule::is_anim_resource(fighter.module_accessor, Hash40::new("catch_special"));
+pub unsafe fn catch_attack_check_special_anim_boma(module_accessor: *mut BattleObjectModuleAccessor) -> bool {
+    let has_anim = MotionModule::is_anim_resource(module_accessor, Hash40::new("catch_special"));
     println!("Special pummel has anim: {has_anim}");
     return has_anim;
+}
+
+pub unsafe fn catch_attack_check_special_anim(fighter: &mut L2CFighterCommon) -> bool {
+    return catch_attack_check_special_anim_boma(fighter.module_accessor);
 }
 
 pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool {
@@ -96,7 +101,7 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
     if catch_attack_check_special_input(fighter) {
         ControlModule::clear_command(fighter.module_accessor, false);
         let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
-        let pummel_if_no_anim = [*FIGHTER_KIND_POPO,*FIGHTER_KIND_NANA,*FIGHTER_KIND_TANTAN].contains(&fighter_kind);
+        let pummel_if_no_anim = [*FIGHTER_KIND_TANTAN].contains(&fighter_kind);
 
         if catch_attack_check_special_anim(fighter) {
             WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
@@ -107,7 +112,6 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
             let clatter_factor = lerp_pummel_power(fighter,PUMMEL_MAX_PENALTY_FACTOR,1.0);
             ControlModule::set_clatter_time(opponent, clatter*clatter_factor,0);
 
-            //println!("Special pummel");
             fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
             return fighter.sub_shift_status_main(L2CValue::Ptr(catch_special_main_loop as *const () as _))
         }
@@ -124,6 +128,7 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
             //.contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_SPECIAL_LW;}
             
             else if [*FIGHTER_KIND_PIKACHU,*FIGHTER_KIND_PICHU].contains(&fighter_kind) {next_status = FIGHTER_PIKACHU_STATUS_KIND_SPECIAL_S_ATTACK;}
+            else if [*FIGHTER_KIND_POPO,*FIGHTER_KIND_NANA,].contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_ATTACK_LW3;}
             else if *FIGHTER_KIND_PIKMIN == fighter_kind {next_status = FIGHTER_STATUS_KIND_ATTACK_S3;}
             else if [*FIGHTER_KIND_MURABITO,*FIGHTER_KIND_SHIZUE].contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_ATTACK_S3;}
             else if *FIGHTER_KIND_PACMAN == fighter_kind {next_status = FIGHTER_STATUS_KIND_ATTACK_DASH;}

@@ -55,12 +55,6 @@ pub unsafe extern "C" fn is_tico_dead(boma: *mut BattleObjectModuleAccessor) -> 
     return (*WEAPON_ROSETTA_TICO_STATUS_KIND_STANDBY..*WEAPON_ROSETTA_TICO_STATUS_KIND_DEAD).contains(&status);
 }
 
-pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2CValue {
-    if catch_attack_check_special_input(fighter) {
-    }
-    return 0.into();
-}
-
 pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     let to_return = catch_attack_main_inner(fighter);
 

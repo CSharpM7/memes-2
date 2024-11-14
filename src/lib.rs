@@ -44,16 +44,15 @@ use crate::imports::imports_agent::*;
 #[no_mangle]
 pub fn smashline_install() {
     install();
-}
+}/*
 #[no_mangle]
 pub fn smashline_uninstall() {
     uninstall();
-}
+} */
 
 pub fn install() {
     println!("Loading memes");
     crate::special_pummel::install();
-    //crate::pikmin_idle::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
