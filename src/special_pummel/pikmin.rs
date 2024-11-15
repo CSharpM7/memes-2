@@ -131,7 +131,11 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
         let pikmin_boma = sv_battle_object::module_accessor(pikmin_id as u32);
         let variation = WorkModule::get_int(pikmin_boma, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_VARIATION);
         let variation_as_str = pikmin_variantion_to_string(variation);
-        println!("Throw {variation_as_str} Pikmin (#{p})") ;
+        println!("Throw {variation_as_str} Pikmin (#{p})");
+
+        WorkModule::off_flag(pikmin_boma, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLAG_IS_CATCH_FAILURE_GROUND_FOLLOW_FORCE);
+        WorkModule::off_flag(pikmin_boma, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLAG_IS_CATCH_FAILURE_WAIT_END);
+        WorkModule::off_flag(pikmin_boma, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLAG_IS_CATCH_RETURN_END);
 
         let mut original_pos = *PostureModule::pos(pikmin_boma);
         let mut pikmin_pos = *PostureModule::pos(pikmin_boma);
@@ -139,22 +143,23 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
         
         //This shouldnt be in a loop but whatever
         let mut capture_id =  WorkModule::get_int(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_TARGET_ID) as u32;
+        /*
         if capture_id == OBJECT_ID_NULL {
             capture_id = WorkModule::get_int(pikmin_boma, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_CATCH_TARGET_BATTLE_OBJECT_ID) as u32;
             if capture_id != OBJECT_ID_NULL {
                 WorkModule::set_int(fighter.module_accessor,capture_id as i32, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_TARGET_ID);
             }
-        }
+        } */
         if capture_id != OBJECT_ID_NULL {
             let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
-            let target_pos = *PostureModule::pos(capture_boma);
+            target_pos = *PostureModule::pos(capture_boma);
             let i = (((p-1) as f32) * 6.0) + (oLRmar); 
             pikmin_pos = Vector3f{x: target_pos.x + i, y: pikmin_pos.y, z: pikmin_pos.z};
         }
 
         let pikmin_lr = (pikmin_pos.x-target_pos.x).signum();
         
-        println!("Moved from {} to {}. Face {pikmin_lr}",original_pos.x,pikmin_pos.x);
+        println!("Moved from {} to {}. Face {pikmin_lr} to {}",original_pos.x,pikmin_pos.x,target_pos.x);
         PostureModule::set_pos(pikmin_boma, &pikmin_pos);
 
 
@@ -185,8 +190,6 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
 }
 pub unsafe extern "C" fn throw_pikmin_all(fighter: &mut L2CFighterCommon) -> bool {
     let olima = fighter.global_table[MODULE_ACCESSOR].get_ptr() as *mut FighterModuleAccessor;
-    FighterSpecializer_Pikmin::hold_pikmin(olima, 3);
-    FighterSpecializer_Pikmin::update_hold_pikmin_param(olima);
     let hold_pikmin_num = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_NUM);
     if hold_pikmin_num == 0 {
         //solimar
@@ -210,7 +213,7 @@ pub unsafe extern "C" fn throw_pikmin_all(fighter: &mut L2CFighterCommon) -> boo
         p=p+1;
     }
     
-    //FighterSpecializer_Pikmin::liberty_pikmin_all(olima);
+    FighterSpecializer_Pikmin::liberty_pikmin_all(olima);
     return true;
 }
 
@@ -271,12 +274,11 @@ pub unsafe extern "C" fn catch_attack_init_variables(fighter: &mut L2CFighterCom
     println!("Init Holding: {hold_pikmin_num}");
     WorkModule::set_int(fighter.module_accessor, hold_pikmin_num-1, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNT);
 
-    /*
     if hold_pikmin_num == 0 { return; }  
     let lead_pikmin_id = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_OBJECT_ID_0) as u32;
     if lead_pikmin_id == 0 { return; }
 
-    let link_node = *FIGHTER_PIKMIN_LINK_NO_PIKMIN;
+    let link_node = *FIGHTER_PIKMIN_LINK_NO_PIKMIN_THROW;
     let is_link = LinkModule::link(fighter.module_accessor, link_node, lead_pikmin_id as u32);
     if is_link & 1 != 0  {
         let pikmin_boma = sv_battle_object::module_accessor(lead_pikmin_id as u32);
@@ -287,17 +289,25 @@ pub unsafe extern "C" fn catch_attack_init_variables(fighter: &mut L2CFighterCom
             println!("Has target at {}",target_pos.x);
             WorkModule::set_int(fighter.module_accessor, capture_id as i32, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_TARGET_ID);
         }
-    } */
+    } 
 }
 pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     if catch_attack_check_special(fighter) {
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
         println!("SpummelMar");
+
         catch_attack_init_variables(fighter);
+
         if WorkModule::get_int(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNT) < 0 {
             return fighter.status_CatchAttack();
         }
+        let capture_id = WorkModule::get_int64(fighter.module_accessor,FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_TARGET_ID) as u64;
+        if capture_id != OBJECT_ID_NULL as u64{
+            let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
+            StatusModule::change_status_force(capture_boma, *FIGHTER_STATUS_KIND_CAPTURE_CUT, false);
+        }
+
         throw_pikmin_all(fighter);
 
         MotionModule::change_motion(fighter.module_accessor, Hash40::new("catch_special"), 0.0, 1.0, false, 0.0, false, false);
@@ -434,7 +444,7 @@ pub fn install() {
         //.status(Init, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_init)
         .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_uniq)
         .status(Main, *FIGHTER_STATUS_KIND_THROW, throw_main_uniq)
-        .status(Exec, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_exec)
+        //.status(Exec, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_exec)
     .install();
     smashline::Agent::new("pikmin_pikmin")
        .status(Main, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S, pikmin_special_s_main)
