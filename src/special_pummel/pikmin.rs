@@ -35,13 +35,17 @@ unsafe extern "C" fn link_event_store_l2c_table(fighter: &mut L2CFighterCommon, 
     ret
 }
 
-pub const FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_TARGET_ID: i32 = 0x11000004;
+pub const FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNTDOWN: i32 = 0x11000007;
+pub const FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNT: i32 = 0x11000008;
+pub const FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_TARGET_ID: i32 = 0x11000009;
+pub const FIGHTER_PIKMIN_STATUS_CATCH_FLAG_CHARGE: i32 = 0x2100000D;
 /*
 ACMD
  */
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
-        macros::ATTACK(agent, 2, 0, Hash40::new("top"), 3.0, 361, 25, 0, 30, 3.5, 0.0, 5.0, 13.5, Some(0.0), Some(5.0), Some(9.0), 1.6, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_F, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_PUNCH, *ATTACK_REGION_PUNCH);
+        //macros::ATTACK(agent, 2, 0, Hash40::new("top"), 3.0, 361, 25, 0, 30, 3.5, 0.0, 5.0, 13.5, Some(0.0), Some(5.0), Some(9.0), 1.6, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_F, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_PUNCH, *ATTACK_REGION_PUNCH);
+        //WorkModule::on_flag(agent.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_FLAG_CHARGE);
     }
     wait(agent.lua_state_agent, 2.0);
     if macros::is_excute(agent) {
@@ -139,11 +143,15 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
 
 pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2CValue {
     if catch_attack_check_special(fighter) {
+        println!("Spummel init?");
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
 
         WorkModule::set_int(fighter.module_accessor, OBJECT_ID_NULL as i32, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_TARGET_ID);
 
+        WorkModule::set_int(fighter.module_accessor, 5, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNTDOWN);
+        WorkModule::set_int(fighter.module_accessor, 0, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNT);
+        /* 
         let olima = fighter.global_table[MODULE_ACCESSOR].get_ptr() as *mut FighterModuleAccessor;
         FighterSpecializer_Pikmin::hold_pikmin(olima, 3);
         FighterSpecializer_Pikmin::update_hold_pikmin_param(olima);
@@ -172,22 +180,26 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
         
         FighterSpecializer_Pikmin::liberty_pikmin_all(olima);
         //FighterSpecializer_Pikmin::reduce_pikmin_all(olima); //apparently this fucks shit up
-        
-        return 0.into();
+        */
+        //return 0.into();
     }
-    smashline::original_status(Init, fighter, *FIGHTER_STATUS_KIND_CATCH_ATTACK)(fighter)
+    return 0.into();
+    //return smashline::original_status(Init, fighter, *FIGHTER_STATUS_KIND_CATCH_ATTACK)(fighter);
 }
 
 pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     if WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
         println!("SpummelMar");
-        MotionModule::change_motion(fighter.module_accessor, Hash40::new("catch_special"), 0.0, 1.0, false, 0.0, false, false);
+        fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
         return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_Throw_Main as *const () as _));
-        //fighter.change_status(FIGHTER_STATUS_KIND_THROW.into(), false.into());
-        //return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
     }
     
-    return catch_attack_main_default(fighter);
+    return fighter.status_CatchAttack();
+}
+
+pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
+
+    return catch_attack_main_default_loop(fighter);
 }
 
 
@@ -215,6 +227,29 @@ pub unsafe extern "C" fn pikmin_special_s_main(weapon: &mut L2CWeaponCommon) -> 
     
     return original;
 }
+pub unsafe extern "C" fn catch_attack_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
+    if WorkModule::count_down_int(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNTDOWN, 0) {
+        let olima = fighter.global_table[MODULE_ACCESSOR].get_ptr() as *mut FighterModuleAccessor;
+    
+        FighterSpecializer_Pikmin::hold_pikmin(olima, 3);
+        FighterSpecializer_Pikmin::update_hold_pikmin_param(olima);
+        let hold_pikmin_num = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_NUM);
+        if hold_pikmin_num == 0 {
+            //solimar
+            println!("Solimar");
+            return 0.into();
+        }
+        println!("Holding {hold_pikmin_num} pikmin");
+
+        let p = WorkModule::get_int(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNT);
+        let could_throw = throw_pikmin(fighter,p);
+        if could_throw {
+            WorkModule::set_int(fighter.module_accessor, 5, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNTDOWN);
+        }
+        WorkModule::inc_int(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNT);
+    }
+    return 0.into();
+}
 
 pub fn install() {
     smashline::Agent::new("pikmin")
@@ -223,9 +258,12 @@ pub fn install() {
         .acmd("sound_catchspecial", sound_catchspecial,Priority::Default)
         .acmd("expression_catchspecial", expression_catchspecial,Priority::Default)
         .status(Init, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_init)
-       .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_uniq)
+        .status(Exec, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_exec)
+        .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_uniq)
+        //.status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_main_default)
     .install();
+    /* 
     smashline::Agent::new("pikmin_pikmin")
        .status(Main, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S, pikmin_special_s_main)
-    .install();
+    .install();*/
 }

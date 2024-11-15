@@ -161,6 +161,8 @@ pub unsafe extern "C" fn throw_pikmin(fighter: &mut L2CFighterCommon, p: i32) ->
 }
 
 pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let to_return = fighter.status_Appeal();
+    println!("Appeal main");
     WorkModule::set_int(fighter.module_accessor, 1, THROW_TIMER);
     WorkModule::set_int(fighter.module_accessor, 0, THROW_CYCLE);
     WorkModule::off_flag(fighter.module_accessor, THROW_PIKMIN);
@@ -194,15 +196,15 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
     //LinkModule::unlink(fighter.module_accessor, *FIGHTER_PIKMIN_LINK_NO_PIKMIN);
     println!("End loop");
 
-    0.into()
+    to_return
 }
 
 
 pub fn install() {   
-    Agent::new("pikmin_pikmin")
-        .status(Init, *FIGHTER_STATUS_KIND_APPEAL, catch_attack_init)
+    Agent::new("pikmin")
+        .status(Main, *FIGHTER_STATUS_KIND_APPEAL, catch_attack_init)
         //.status(Exec, *FIGHTER_STATUS_KIND_APPEAL, catch_attack_exec)
-        .status(Init, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_GROUND_FOLLOW, pik_ground_follow_init)
-        .status(Pre, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_GROUND_FOLLOW, pik_ground_follow_pre)
+        //.status(Init, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_GROUND_FOLLOW, pik_ground_follow_init)
+        //.status(Pre, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_GROUND_FOLLOW, pik_ground_follow_pre)
     .install();
 }

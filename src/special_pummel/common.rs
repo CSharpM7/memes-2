@@ -79,6 +79,11 @@ pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool
 // STATUS
 #[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_status_CatchAttack)]
 unsafe fn status_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
+    if fighter_kind == *FIGHTER_KIND_PIKMIN {
+        println!("Fuck olimar");
+        return original!()(fighter);
+    }
     return catch_attack_main_inner(fighter);
 }
 pub unsafe extern "C" fn catch_attack_main_new(fighter: &mut L2CFighterCommon, call_original_first: bool) -> L2CValue {
@@ -97,11 +102,12 @@ pub unsafe extern "C" fn catch_attack_main_new(fighter: &mut L2CFighterCommon, c
     }
 }
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
+    let pummel_if_no_anim = [*FIGHTER_KIND_TANTAN].contains(&fighter_kind);
+
     WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
-    if catch_attack_check_special_input(fighter) {
+    if catch_attack_check_special_input(fighter) && fighter_kind != *FIGHTER_KIND_PIKMIN {
         ControlModule::clear_command(fighter.module_accessor, false);
-        let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
-        let pummel_if_no_anim = [*FIGHTER_KIND_TANTAN].contains(&fighter_kind);
 
         if catch_attack_check_special_anim(fighter) {
             WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
@@ -161,7 +167,11 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
 
 pub unsafe extern "C" fn catch_attack_main_default(fighter: &mut L2CFighterCommon) -> L2CValue {
     WorkModule::inc_int(fighter.module_accessor, FIGHTER_INSTANCE_CATCH_ATTACK_COUNT);
-    fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")))
+    fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_attack")));
+    return fighter.sub_shift_status_main(L2CValue::Ptr(catch_attack_main_default_loop as *const () as _));
+}
+pub unsafe extern "C" fn catch_attack_main_default_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
+    return fighter.status_CatchAttack_Main();
 }
 
 pub unsafe extern "C" fn catch_special_main_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
@@ -228,21 +238,23 @@ unsafe extern "C" fn attack_100_main(fighter: &mut L2CFighterCommon, param_1: L2
 
 fn nro_hook(info: &skyline::nro::NroInfo) {
     if info.name == "common" {
-        skyline::install_hooks!(
-            attack_mtrans_pre_process,
-            attack_100_main,
-        );
-
-        //#[cfg(not(feature = "devhook"))]
-        skyline::install_hooks!(
-            status_CatchAttack,
-        );
+        #[cfg(not(feature = "dev"))]{
+            println!("Install hooks");
+            skyline::install_hooks!(
+                attack_mtrans_pre_process,
+                attack_100_main,
+                status_CatchAttack,
+            );
+        }
+        #[cfg(feature = "dev")]
+        println!("Dev is in nro hook?");
     }
 }
 
 pub fn install() {
-    #[cfg(not(feature = "dev"))]
+    #[cfg(not(feature = "dev"))]{
     skyline::nro::add_hook(nro_hook);
+    }
 
     #[cfg(feature = "devhook")]
     return;
