@@ -100,6 +100,10 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
         WorkModule::on_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
         //WorkModule::on_flag(agent.module_accessor, FIGHTER_PIKMIN_STATUS_THROW_FLAG_DISABLE_CLATTER);
     }
+    frame(agent.lua_state_agent, 12.0); 
+    if macros::is_excute(agent) {
+        StatusModule::change_status_request_from_script(agent.module_accessor, *FIGHTER_STATUS_KIND_SPECIAL_LW,false);
+    }
 }
 
 unsafe extern "C" fn effect_catchspecial(agent: &mut L2CAgentBase) {
@@ -157,13 +161,13 @@ unsafe extern "C" fn pikmin_catchspecial(agent: &mut L2CAgentBase) {
     if !is_sub {
         wait(agent.lua_state_agent, 1.0);
         if macros::is_excute(agent) {
-            macros::ATTACK(agent, 0, 0, Hash40::new("top"), 6.0, 315, 0, 10, 140, 2.0, 0.0, 0.0, 1.6, None, None, None, 0.7, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_F, false, 0, -1.0, 0, true, true, false, false, false, *COLLISION_SITUATION_MASK_G, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_paralyze"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_ELEC, *ATTACK_REGION_ENERGY);
+            macros::ATTACK(agent, 0, 0, Hash40::new("top"), 6.0, 361, 0, 10, 60, 2.0, 0.0, 0.0, 1.6, None, None, None, 1.7, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_F, false, 0, -1.0, 0, false, false, false, false, false, *COLLISION_SITUATION_MASK_G, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_paralyze"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_ELEC, *ATTACK_REGION_ENERGY);
             AttackModule::set_catch_only_all(agent.module_accessor, true, false);
         }
-        wait(agent.lua_state_agent, 1.0);
-        if macros::is_excute(agent) {
-            AttackModule::clear_all(agent.module_accessor);
-        }
+    }
+    wait(agent.lua_state_agent, 1.0);
+    if macros::is_excute(agent) {
+        StatusModule::change_status_request_from_script(agent.module_accessor, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_LW_RESPOND,false);
     }
 }
 
@@ -624,6 +628,9 @@ pub unsafe extern "C" fn pikmin_throw_f_sp_loop(weapon: &mut L2CWeaponCommon) ->
         }
     }
     else if !sub {
+        if StopModule::is_hit(weapon.module_accessor) {
+            StopModule::end_stop(weapon.module_accessor);
+        }
         //println!("Thrown");
     }
 
