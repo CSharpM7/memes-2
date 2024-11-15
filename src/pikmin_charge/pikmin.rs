@@ -195,6 +195,7 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
     }
     //LinkModule::unlink(fighter.module_accessor, *FIGHTER_PIKMIN_LINK_NO_PIKMIN);
     println!("End loop");
+    FighterSpecializer_Pikmin::liberty_pikmin_all(olima);
 
     to_return
 }
