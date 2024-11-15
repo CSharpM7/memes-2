@@ -213,7 +213,7 @@ pub unsafe extern "C" fn throw_pikmin_all(fighter: &mut L2CFighterCommon) -> boo
         p=p+1;
     }
     
-    FighterSpecializer_Pikmin::liberty_pikmin_all(olima);
+    FighterSpecializer_Pikmin::reduce_pikmin_all(olima);
     return true;
 }
 
@@ -296,6 +296,9 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
         println!("SpummelMar");
+        WorkModule::set_int64(fighter.module_accessor, hash40("throw_f") as i64, *FIGHTER_STATUS_CATCH_WAIT_WORK_INT_MOTION_KIND);
+        fighter.change_status(FIGHTER_STATUS_KIND_THROW.into(), false.into());
+        return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
 
         catch_attack_init_variables(fighter);
 
@@ -312,9 +315,6 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
 
         MotionModule::change_motion(fighter.module_accessor, Hash40::new("catch_special"), 0.0, 1.0, false, 0.0, false, false);
         return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_Throw_Main as *const () as _));
-        //WorkModule::set_int64(fighter.module_accessor, hash40("throw_f") as i64, *FIGHTER_STATUS_CATCH_WAIT_WORK_INT_MOTION_KIND);
-        //fighter.change_status(FIGHTER_STATUS_KIND_THROW.into(), false.into());
-        //return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
     }
     
     return fighter.status_CatchAttack();
@@ -329,7 +329,8 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
     if StatusModule::prev_status_kind(fighter.module_accessor, 0) == *FIGHTER_STATUS_KIND_CATCH_ATTACK 
     && WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
         println!("Spummel Throw");
-        catch_attack_init_variables(fighter);
+        //catch_attack_init_variables(fighter);
+        //throw_pikmin_all(fighter);
 
         WorkModule::set_int64(fighter.module_accessor, hash40("throw_f") as i64, *FIGHTER_STATUS_CATCH_WAIT_WORK_INT_MOTION_KIND);
         //fighter.status_Throw_Sub();
