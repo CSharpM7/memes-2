@@ -33,10 +33,12 @@ pub unsafe extern "C" fn lerp_pummel_power(fighter: &mut L2CFighterCommon,a: f32
 pub unsafe extern "C" fn change_status_callback(fighter: &mut L2CFighterCommon) -> L2CValue {
     let status_kind = StatusModule::status_kind(fighter.module_accessor);
     let status_kind_next = StatusModule::status_kind_next(fighter.module_accessor);
+    let is_damaged = is_damage_status_next(fighter.module_accessor);
     
-    if ![*FIGHTER_STATUS_KIND_ATTACK,*FIGHTER_STATUS_KIND_ATTACK_100].contains(&status_kind_next)
+    if (![*FIGHTER_STATUS_KIND_ATTACK,*FIGHTER_STATUS_KIND_ATTACK_100].contains(&status_kind_next)
     && ![*FIGHTER_STATUS_KIND_THROW,*FIGHTER_STATUS_KIND_THROW_KIRBY].contains(&status_kind_next)
-    && (status_kind != *FIGHTER_STATUS_KIND_CATCH_ATTACK && status_kind_next != *FIGHTER_STATUS_KIND_CATCH_ATTACK)
+    && (status_kind != *FIGHTER_STATUS_KIND_CATCH_ATTACK && status_kind_next != *FIGHTER_STATUS_KIND_CATCH_ATTACK))
+    || is_damaged
     {
         WorkModule::off_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
         
@@ -81,8 +83,12 @@ pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool
 unsafe fn status_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
     let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
     if fighter_kind == *FIGHTER_KIND_PIKMIN {
-        println!("Fuck olimar");
-        return original!()(fighter);
+        //Assume that if Olimar grabbed with no Pikmin, it must mean he is a custom fighter
+        //If Olimar is vanilla though, changing this hook can crash the game
+        let hold_pikmin_num = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_NUM);
+        if hold_pikmin_num != 0 {
+            return original!()(fighter);
+        }
     }
     return catch_attack_main_inner(fighter);
 }
@@ -103,7 +109,6 @@ pub unsafe extern "C" fn catch_attack_main_new(fighter: &mut L2CFighterCommon, c
 }
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
     let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
-    let pummel_if_no_anim = [*FIGHTER_KIND_TANTAN].contains(&fighter_kind);
 
     WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
     if catch_attack_check_special_input(fighter) && fighter_kind != *FIGHTER_KIND_PIKMIN {
@@ -121,7 +126,7 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
             fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
             return fighter.sub_shift_status_main(L2CValue::Ptr(catch_special_main_loop as *const () as _))
         }
-        else if !pummel_if_no_anim {
+        else {
             let mut next_status = FIGHTER_STATUS_KIND_WAIT;
 
             if [*FIGHTER_KIND_PFUSHIGISOU,*FIGHTER_KIND_WOLF]
