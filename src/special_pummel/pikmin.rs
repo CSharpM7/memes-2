@@ -63,7 +63,7 @@ pub const FIGHTER_PIKMIN_STATUS_THROW_FLAG_DISABLE_CLATTER: i32 = 0x21000010;
 pub const FIGHTER_PIKMIN_INSTANCE_WORK_ID_FLOAT_CHARGE_TARGET_X: i32 = 0x4E;
 pub const FIGHTER_PIKMIN_INSTANCE_WORK_ID_FLOAT_CHARGE_TARGET_Y: i32 = 0x4F;
 
-pub const WEAPON_PIKMIN_PIKMIN_MAX_CHARGE_RANGE: f32 = 70.0;
+pub const WEAPON_PIKMIN_PIKMIN_MAX_CHARGE_RANGE: f32 = 200.0;
 pub const WEAPON_PIKMIN_PIKMIN_STATUS_THROW_WORK_FLAG_DISABLE_CLATTER: i32 = 0x21000010;
 pub const WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLAG_DISABLE_CHARGE_CHECK: i32 = 0x2000000E;
 /*
@@ -423,7 +423,7 @@ pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) 
     if WorkModule::is_flag(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_FLAG_CHARGE) {
         WorkModule::off_flag(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_FLAG_CHARGE);
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
-        //WorkModule::set_int(fighter.module_accessor, 1, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_COUNTDOWN);
+        //WorkModule::set_int(fighter.module_accessor, 3, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_COUNTDOWN);
         //WorkModule::set_int(fighter.module_accessor, 1, FIGHTER_PIKMIN_STATUS_CATCH_WORK_INT_CHARGE_COUNTDOWN);
         
         let olima = fighter.global_table[MODULE_ACCESSOR].get_ptr() as *mut FighterModuleAccessor;
@@ -492,7 +492,7 @@ pub unsafe extern "C" fn special_lw_catch_main(fighter: &mut L2CFighterCommon) -
         return 1.into();
     }
     let status_frame = fighter.global_table[STATUS_FRAME].get_i32();
-    if status_frame == 1 {
+    if status_frame == 2 {
         let olima = fighter.global_table[MODULE_ACCESSOR].get_ptr() as *mut FighterModuleAccessor;
         FighterSpecializer_Pikmin::hold_pikmin(olima, 1);
         FighterSpecializer_Pikmin::update_hold_pikmin_param(olima);
@@ -630,10 +630,10 @@ pub unsafe extern "C" fn pikmin_frame(weapon: &mut L2CWeaponCommon)  {
     let listen_to_charge =
     (*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_WAIT..*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_TURN_WAIT).contains(&status)
     || (*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_GROUND_FOLLOW..*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_JUMP_AERIAL).contains(&status)
-    || (*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S_CLING..*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S_CLING_REMOVE).contains(&status)
-    || *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_CATCH_CUT == status
-    || *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_CATCH_ATTACK == status
-    || *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_CATCH_CUT_SUB == status
+    //|| (*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S_CLING..*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S_CLING_REMOVE).contains(&status)
+    //|| *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_CATCH_CUT == status
+    //|| *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_CATCH_ATTACK == status
+    //|| *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_CATCH_CUT_SUB == status
     ;
     if listen_to_charge {
         let owner = get_owner_boma(weapon);
