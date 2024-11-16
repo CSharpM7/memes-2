@@ -181,17 +181,13 @@ pub unsafe extern "C" fn catch_attack_init(fighter: &mut L2CFighterCommon) -> L2
     let iVar14 = hold_pikmin_num-1;
     let mut p = 0;
     let mut lead_pikmin_id = OBJECT_ID_NULL;
-    loop {
+    for p in 0..hold_pikmin_num {
         if !throw_pikmin(fighter,p) {
             break;
         }
-        let bVar3 = p < iVar14;
-        println!("{p} < {iVar14} ? ");
-        if !bVar3 {break;}
         
         FighterSpecializer_Pikmin::hold_pikmin(olima, 3);
         FighterSpecializer_Pikmin::update_hold_pikmin_param(olima);
-        p=p+1;
     }
     //LinkModule::unlink(fighter.module_accessor, *FIGHTER_PIKMIN_LINK_NO_PIKMIN);
     println!("End loop");
