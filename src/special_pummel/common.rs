@@ -35,9 +35,11 @@ pub unsafe extern "C" fn change_status_callback(fighter: &mut L2CFighterCommon) 
     let status_kind_next = StatusModule::status_kind_next(fighter.module_accessor);
     let is_damaged = is_damage_status_next(fighter.module_accessor);
     
-    if (![*FIGHTER_STATUS_KIND_ATTACK,*FIGHTER_STATUS_KIND_ATTACK_100].contains(&status_kind_next)
-    && ![*FIGHTER_STATUS_KIND_THROW,*FIGHTER_STATUS_KIND_THROW_KIRBY].contains(&status_kind_next)
-    && (status_kind != *FIGHTER_STATUS_KIND_CATCH_ATTACK && status_kind_next != *FIGHTER_STATUS_KIND_CATCH_ATTACK))
+    if (
+        ![*FIGHTER_STATUS_KIND_ATTACK,*FIGHTER_STATUS_KIND_ATTACK_100].contains(&status_kind_next)
+        && ![*FIGHTER_STATUS_KIND_THROW,*FIGHTER_STATUS_KIND_THROW_KIRBY].contains(&status_kind_next)
+        && (status_kind != *FIGHTER_STATUS_KIND_CATCH_ATTACK && status_kind_next != *FIGHTER_STATUS_KIND_CATCH_ATTACK)
+    )
     || is_damaged
     {
         WorkModule::off_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL);
