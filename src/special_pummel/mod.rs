@@ -9,6 +9,7 @@ pub mod imports;
 
 mod edge;
 mod gaogaen;
+mod gekkouga;
 mod iceclimber;
 mod koopa;
 mod metaknight;
@@ -29,6 +30,7 @@ pub fn install() {
     
     edge::install();
     gaogaen::install();
+    gekkouga::install();
     iceclimber::install();
     koopa::install();
     metaknight::install();

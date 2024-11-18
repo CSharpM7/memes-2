@@ -281,9 +281,7 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
             return fighter.sub_shift_status_main(L2CValue::Ptr(throw_sp_main_loop as *const () as _));
         }
     }
-    else {
-        fighter.status_Throw_Sub();
-    }
+    fighter.status_Throw_Sub();
     fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_Throw_Main as *const () as _))
 }
 
