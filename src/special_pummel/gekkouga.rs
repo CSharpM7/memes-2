@@ -16,7 +16,10 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
         JostleModule::set_status(agent.module_accessor, false);
         macros::WHOLE_HIT(agent, *HIT_STATUS_XLU);
     }
+    frame(agent.lua_state_agent, 20.0);
+    FT_MOTION_RATE_RANGE(agent,20.0,27.0,12.0);
     frame(agent.lua_state_agent, 27.0);
+    FT_MOTION_RATE(agent,1.0);
     if macros::is_excute(agent) {
         let target = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_OBJECT);
         let target_group = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_HIT_GROUP);
@@ -35,6 +38,10 @@ unsafe extern "C" fn effect_catchspecial(agent: &mut L2CAgentBase) {
         //macros::EFFECT(agent, Hash40::new("gekkouga_kageuchi_warp_end"), Hash40::new("top"), 0, 9.5, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
         //macros::LANDING_EFFECT(agent, Hash40::new("sys_down_smoke"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
         macros::EFFECT(agent, Hash40::new("gekkouga_kageuchi_warp_start"), Hash40::new("top"), 0, 0, -3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
+    }
+    frame(agent.lua_state_agent, 20.0);
+    if macros::is_excute(agent) {
+        macros::EFFECT_OFF_KIND(agent, Hash40::new("gekkouga_kageuchi_warp_start"), false,false);
     }
 }
 
@@ -64,13 +71,14 @@ unsafe extern "C" fn game_catchspecialf(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 6.0);
     macros::FT_MOTION_RATE(agent, 0.9);
     if macros::is_excute(agent) {
-        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 10.0, 36, 104, 0, 60, 8.5, 0.0, 16.0, 14.5, Some(0.0), Some(9.0), Some(14.5), 1.3, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_POS, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_KICK, *ATTACK_REGION_KICK);
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 10.0, 36, 83, 0, 60, 7.0, 0.0, 10.0, 14.5, Some(0.0), Some(8.0), Some(14.5), 1.3, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_POS, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_KICK, *ATTACK_REGION_KICK);
     }
     frame(agent.lua_state_agent, 9.0);
     if macros::is_excute(agent) {
         AttackModule::clear_all(agent.module_accessor);
     }
 }
+
 unsafe extern "C" fn game_catchspecialb(agent: &mut L2CAgentBase) {
     macros::FT_MOTION_RATE(agent, 1.1);
     frame(agent.lua_state_agent, 5.0);
@@ -80,7 +88,7 @@ unsafe extern "C" fn game_catchspecialb(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 6.0);
     macros::FT_MOTION_RATE(agent, 0.9);
     if macros::is_excute(agent) {
-        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 12.0, 48, 103, 0, 60, 8.0, 0.0, 8.0, -15.0, Some(0.0), Some(8.5), Some(-12.0), 1.3, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_POS, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_KICK, *ATTACK_REGION_KICK);
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 10.0, 36, 83, 0, 60, 7.0, 0.0, 8.0, -13.0, Some(0.0), Some(8.5), Some(-12.0), 1.3, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_POS, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_KICK, *ATTACK_REGION_KICK);
     }
     frame(agent.lua_state_agent, 9.0);
     if macros::is_excute(agent) {
@@ -98,7 +106,7 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
         WorkModule::set_int64(fighter.module_accessor, opponent_id as i64, FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID);
         
         let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
-        StatusModule::change_status_force(opponent, *FIGHTER_STATUS_KIND_FURAFURA_STAND, true);
+        StatusModule::change_status_force(opponent, *FIGHTER_STATUS_KIND_FURAFURA_END, true);
         
         fighter.change_status(FIGHTER_STATUS_KIND_THROW.into(), false.into());
         return fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_CatchAttack_Main as *const () as _));
@@ -163,9 +171,30 @@ pub unsafe extern "C" fn throw_sp_main_loop_uniq(fighter: &mut L2CFighterCommon)
         if MotionModule::is_end(fighter.module_accessor) {
             fighter.change_status(FIGHTER_GEKKOUGA_STATUS_KIND_SPECIAL_S_END.into(), false.into());
         }
-        fighter.status_Throw_Main()
+        //fighter.status_Throw_Main()
+        if !StatusModule::is_changing(fighter.module_accessor)
+        && StatusModule::is_situation_changed(fighter.module_accessor) {
+            if !fighter.is_grounded() {
+                fighter.sub_set_ground_correct_by_situation(false.into());
+                fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_GROUND_STOP.into(),FIGHTER_KINETIC_TYPE_AIR_STOP.into());
+            }
+        }
+        /*
+        if CancelModule::is_enable_cancel(fighter.module_accessor) {
+            if fighter.sub_wait_ground_check_common(false.into()).get_bool()
+            || fighter.sub_air_check_fall_common().get_bool() {
+                return 1.into();
+            }
+        }
+        if MotionModule::is_end(fighter.module_accessor) {
+            fighter.change_status_by_situation(FIGHTER_STATUS_KIND_WAIT.into(), FIGHTER_STATUS_KIND_FALL.into(), false.into());
+            return 1.into();
+        } 
+        */
     }
+    return 0.into();
 }
+
 pub unsafe extern "C" fn throw_end_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     CameraModule::set_enable_camera(fighter.module_accessor,true,0);
     VisibilityModule::set_whole(fighter.module_accessor, true);
