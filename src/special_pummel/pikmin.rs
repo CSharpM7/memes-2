@@ -247,7 +247,7 @@ unsafe extern "C" fn pikmin_game_spscharge_v(agent: &mut L2CAgentBase) {
 }
 unsafe extern "C" fn pikmin_game_spsgrabattack_v(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
-        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 4.7, 361, 0, 0, 0, 3.0, 0.0, 0.0, 0.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, -1, 0.0, 0, false, false, false, true, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_SLAP, *ATTACK_REGION_PIKMIN);
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 4.7, 361, 0, 0, 0, 3.0, 0.0, 0.0, 0.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, -1, 0.0, 0, false, false, false, true, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_SLAP, *ATTACK_REGION_PIKMIN);
     }
     loop {
         frame(agent.lua_state_agent, 17.0);
@@ -269,8 +269,8 @@ unsafe extern "C" fn pikmin_effect_spsgrabattack_v(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
         macros::EFFECT(agent, Hash40::new("pikmin_attach"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
 
-        //macros::EFFECT(agent, Hash40::new("pikmin_hit_white"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
-        //LAST_EFFECT_SET_COLOR(agent, 1.0, 0.0, 1.0);
+        macros::EFFECT(agent, Hash40::new("pikmin_hit_white"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
+        LAST_EFFECT_SET_COLOR(agent, 1.0, 0.0, 1.0);
     }
     loop {
         wait(agent.lua_state_agent, 17.0);
