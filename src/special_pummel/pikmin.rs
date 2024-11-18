@@ -47,11 +47,11 @@ pub unsafe  fn pikmin_variantion_to_string(variation: i32) -> &'static str {
     WEAPON_PIKMIN_PIKMIN_VARIATION_YELLOW: 0x1,
      */
     return match variation {
-        0 => {"red"}
-        1 => {"yellow"}
-        2 => {"blue"}
-        3 => {"white"}
-        4 => {"purple"}
+        0 => {"r"}
+        1 => {"y"}
+        2 => {"b"}
+        3 => {"w"}
+        4 => {"v"}
         _ => {"?"}
     };
 }
@@ -154,19 +154,9 @@ unsafe extern "C" fn effect_catchspecial(agent: &mut L2CAgentBase) {
         macros::EFFECT_FOLLOW(agent, Hash40::new("pikmin_order"), Hash40::new("s_antenna4"), 0, 0, 0, 0, 0, 0, 1, true);
     }
     frame(agent.lua_state_agent, 23.0);
-    if macros::is_excute(agent) {
-        /* 
-        let lr = PostureModule::lr(agent.module_accessor);
-        let lr_z = (lr-1.0)*-90.0;
-
-        let effect = EffectModule::req_follow(agent.module_accessor, Hash40::new("sys_direction"), Hash40::new("top"), &Vector3f::new(0.0, 8.5, lr*3.0), &Vector3f::new(0.0, 90.0, 270.0+(lr_z)), 0.9, true, 0, 0, 0, 0, 0, false, false) as u32;
-        EffectModule::set_alpha(agent.module_accessor, effect, 0.5);
-
-        let team_color = FighterUtil::get_team_color(agent.module_accessor);
-        let mut effect_team_color = FighterUtil::get_effect_team_color(EColorKind(team_color as i32), Hash40::new("direction_effect_color"));
-
-        EffectModule::set_rgb_partial_last(agent.module_accessor, effect_team_color.value[0], effect_team_color.value[1], effect_team_color.value[2]);
-        */
+    if macros::is_excute(agent) {        
+        macros::LANDING_EFFECT(agent, Hash40::new("sys_atk_smoke"), Hash40::new("top"), -2.75, 0, 0.0, 0, 0, 0, 0.6, 0, 0, 0, 0, 0, 0, false);
+        //macros::FOOT_EFFECT(agent, Hash40::new("sys_run_smoke"), Hash40::new("top"), 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, false);
     }
     frame(agent.lua_state_agent, 40.0);
     if macros::is_excute(agent) {
@@ -177,7 +167,7 @@ unsafe extern "C" fn effect_catchspecial(agent: &mut L2CAgentBase) {
 unsafe extern "C" fn sound_catchspecial(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 22.0);
     if macros::is_excute(agent) {
-        macros::PLAY_SE(agent, Hash40::new("se_pikmin_special_l01"));
+        macros::PLAY_SE(agent, Hash40::new("vc_pikmin_001"));
     }
 }
 
@@ -238,6 +228,60 @@ unsafe extern "C" fn pikmin_sound_catchspecial(agent: &mut L2CAgentBase) {
         macros::PLAY_SE(agent, Hash40::new("se_pikmin_special_l02"));
     }
 }
+unsafe extern "C" fn pikmin_game_spscharge_v(agent: &mut L2CAgentBase) {    
+    println!("Purple charge");
+    if macros::is_excute(agent) {
+        macros::SEARCH(agent, 0, 0, Hash40::new("top"), 7.0, 0.0, 3.0, 0.0, None, None, None,*COLLISION_KIND_MASK_HSR, *HIT_STATUS_MASK_NORMAL, 1, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_FIEB, *COLLISION_PART_MASK_ALL, false);
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 0.0, 361, 0, 0, 0, 4.5, 0.0, 3.0, 0.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, f32::NAN, 0.0, 0, true, false, true, true, false, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_FI, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_KICK, *ATTACK_REGION_PIKMIN);
+        //macros::ATTACK(agent, 2, 0, Hash40::new("top"), 10.4, 361, 8, 0, 4, 4.5, 0.0, 3.0, 0.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, -5.2, 0.0, 0, true, false, false, false, false, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_KICK, *ATTACK_REGION_PIKMIN);
+        //set above id to 2?
+    }
+    frame(agent.lua_state_agent, 2.0);
+    if macros::is_excute(agent) {
+        WorkModule::on_flag(agent.module_accessor, *WEAPON_PIKMIN_PIKMIN_STATUS_SPECIAL_S_WORK_FLAG_LANDING);
+    }
+    frame(agent.lua_state_agent, 120.0);
+    if macros::is_excute(agent) {
+        AttackModule::clear_all(agent.module_accessor);
+    }
+}
+unsafe extern "C" fn pikmin_game_spsgrabattack_v(agent: &mut L2CAgentBase) {
+    if macros::is_excute(agent) {
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 4.7, 361, 0, 0, 0, 3.0, 0.0, 0.0, 0.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, -1, 0.0, 0, false, false, false, true, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_SLAP, *ATTACK_REGION_PIKMIN);
+    }
+    loop {
+        frame(agent.lua_state_agent, 17.0);
+        if macros::is_excute(agent) {
+            macros::ATTACK(agent, 0, 0, Hash40::new("top"), 2.0, 361, 0, 0, 0, 3.0, 0.0, 0.0, 0.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, -1, 0.0, 0, false, false, false, true, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_HARISEN, *ATTACK_REGION_PIKMIN);
+        }
+        frame(agent.lua_state_agent, 19.0);
+        if macros::is_excute(agent) {
+            AttackModule::clear_all(agent.module_accessor);
+        }
+        
+        agent.clear_lua_stack();
+        sv_animcmd::wait_loop_sync_mot(agent.lua_state_agent);
+        agent.pop_lua_stack(1);
+    }
+}
+
+unsafe extern "C" fn pikmin_effect_spsgrabattack_v(agent: &mut L2CAgentBase) {
+    if macros::is_excute(agent) {
+        macros::EFFECT(agent, Hash40::new("pikmin_attach"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
+
+        //macros::EFFECT(agent, Hash40::new("pikmin_hit_white"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
+        //LAST_EFFECT_SET_COLOR(agent, 1.0, 0.0, 1.0);
+    }
+    loop {
+        wait(agent.lua_state_agent, 17.0);
+        if macros::is_excute(agent) {
+            macros::EFFECT(agent, Hash40::new("pikmin_hit_white"), Hash40::new("top"), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
+            LAST_EFFECT_SET_COLOR(agent, 1.0, 0.0, 1.0);
+        }
+        wait(agent.lua_state_agent, 13.0);
+    }
+}
+
 /*
 STATUS
 */
@@ -562,68 +606,101 @@ pub unsafe extern "C" fn throw_sp_main(fighter: &mut L2CFighterCommon) -> L2CVal
 }
 
 pub unsafe extern "C" fn pikmin_special_s_main(weapon: &mut L2CWeaponCommon) -> L2CValue {
-    let original = smashline::original_status(Main, weapon, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S)(weapon);
+
     let prev_status = StatusModule::prev_status_kind(weapon.module_accessor, 0);
     let owner = get_owner_boma(weapon);
-    if WorkModule::is_flag(owner, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) 
-    && [*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_THROW_F,*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_THROW_F_SUB].contains(&prev_status) {
-        
-        WorkModule::on_flag(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLAG_AUTONOMY);
-
-        let hold_num = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_HOLD_INDEX);
-        let variation = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_VARIATION);
-        let variation_as_str = pikmin_variantion_to_string(variation);
-
-        //KineticModule::change_kinetic(weapon.module_accessor,*WEAPON_KINETIC_TYPE_NONE);
-        KineticModule::clear_speed_all(weapon.module_accessor);
-        PostureModule::add_pos(weapon.module_accessor, &Vector3f::new(0.0,0.25,0.0));
-
-        let lr = PostureModule::lr(weapon.module_accessor);
-        let pos = *PostureModule::pos(weapon.module_accessor);
-
-        let mut target_x = PostureModule::pos_x(weapon.module_accessor) + PostureModule::lr(weapon.module_accessor);
-        let mut target_y = PostureModule::pos_y(weapon.module_accessor) + 1.0;
-        //let target_x = WorkModule::get_float(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLOAT_TARGET_X);
-        //let target_y = WorkModule::get_float(weapon.module_accessor,*WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLOAT_TARGET_Y);
-        let x_offset = (hold_num-1) as f32 * 1.0;
-        let y_offset = (hold_num-1) as f32 * 1.0;
-        //let target_x = WorkModule::get_float(owner, FIGHTER_PIKMIN_INSTANCE_WORK_ID_FLOAT_CHARGE_TARGET_X)+x_offset;
-        //let target_y = WorkModule::get_float(owner,FIGHTER_PIKMIN_INSTANCE_WORK_ID_FLOAT_CHARGE_TARGET_Y)+y_offset;
-
-        //let target_id = WorkModule::get_int(owner, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_TARGET_ID) as u32;
-        let target_id = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_CATCH_TARGET_BATTLE_OBJECT_ID) as u32;
-        if target_id != OBJECT_ID_NULL {
-            let target_boma = sv_battle_object::module_accessor(target_id);
-            let hip_pos = &mut Vector3f{ x: 0.0, y: 0.0, z: 0.0 };
-            ModelModule::joint_global_position(target_boma, Hash40::new("hip"), hip_pos, false);
-            target_x = hip_pos.x+2.0;
-            target_y = hip_pos.y+2.0;
-        } 
-        println!("Homing in on {target_id} at {target_x},{target_y}");
-        //println!("{} > {target_y}",pos.y);
-        
-        let mut direction_full = Vector2f{x:target_x-pos.x, y: (target_y-pos.y)};
-        let direction_len = sv_math::vec2_length(direction_full.x,direction_full.y);
-        let direction = Vector2f{x:direction_full.x/direction_len,y:direction_full.y/direction_len};
-        let speed = (direction_len*0.1).clamp(1.0, 6.0);
-
-        let speed_x = direction.x*speed;
-        let speed_y = (direction.y*speed).max(1.0);
-
-
-        println!("{variation_as_str} Pikmin (#{hold_num}) Speed: {speed_x},{speed_y}");
-        sv_kinetic_energy!(
-            set_speed,
-            weapon,
-            WEAPON_KINETIC_ENERGY_RESERVE_ID_NORMAL,
-            speed_x,//*lr,
-            speed_y
-        );
+    if !WorkModule::is_flag(owner, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) 
+    || ![*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_THROW_F,*WEAPON_PIKMIN_PIKMIN_STATUS_KIND_THROW_F_SUB].contains(&prev_status) {
+        return smashline::original_status(Main, weapon, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S)(weapon);
     }
+    //AttackModule::set_power_mul(weapon.module_accessor, 0.0);
+    //let original = smashline::original_status(Main, weapon, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S)(weapon);
+
+    /*ORIGINAL*/
+    println!("Use new anim");
+    let variation = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_VARIATION);
+    let motion = if variation != *WEAPON_PIKMIN_PIKMIN_VARIATION_VIOLET {Hash40::new("sp_s_thrown")} else {Hash40::new("sp_s_charge")};
+    MotionModule::change_motion(weapon.module_accessor, motion, 0.0, 1.0, false, 0.0, false, false);
+    /* 
+    WorkModule::off_flag(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_STATUS_SPECIAL_S_WORK_FLAG_LANDING);
+    let pos_y = PostureModule::pos_y(weapon.module_accessor);
+    WorkModule::set_float(weapon.module_accessor, pos_y, *WEAPON_PIKMIN_PIKMIN_STATUS_SPECIAL_S_WORK_FLOAT_GROUND_Y);
+    */
+    //Do some random thing with power_special_s and setting power up mul
+
+    WorkModule::off_flag(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLAG_TAKE_FROM_POCKET);
+    //WorkModule::on_flag(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLAG_AUTONOMY);
+
+    let hold_num = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_HOLD_INDEX);
+    let variation = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_VARIATION);
+    let variation_as_str = pikmin_variantion_to_string(variation);
+
+    //KineticModule::change_kinetic(weapon.module_accessor,*WEAPON_KINETIC_TYPE_NONE);
+    KineticModule::clear_speed_all(weapon.module_accessor);
+    PostureModule::add_pos(weapon.module_accessor, &Vector3f::new(0.0,0.25,0.0));
+
+    let lr = PostureModule::lr(weapon.module_accessor);
+    let pos = *PostureModule::pos(weapon.module_accessor);
+
+    let mut target_x = PostureModule::pos_x(weapon.module_accessor) + PostureModule::lr(weapon.module_accessor);
+    let mut target_y = PostureModule::pos_y(weapon.module_accessor) + 1.0;
+    //let target_x = WorkModule::get_float(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLOAT_TARGET_X);
+    //let target_y = WorkModule::get_float(weapon.module_accessor,*WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLOAT_TARGET_Y);
+    let x_offset = (hold_num-1) as f32 * 1.0;
+    let y_offset = (hold_num-1) as f32 * 1.0;
+    //let target_x = WorkModule::get_float(owner, FIGHTER_PIKMIN_INSTANCE_WORK_ID_FLOAT_CHARGE_TARGET_X)+x_offset;
+    //let target_y = WorkModule::get_float(owner,FIGHTER_PIKMIN_INSTANCE_WORK_ID_FLOAT_CHARGE_TARGET_Y)+y_offset;
+
+    //let target_id = WorkModule::get_int(owner, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_TARGET_ID) as u32;
+    let target_id = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_CATCH_TARGET_BATTLE_OBJECT_ID) as u32;
+    if target_id != OBJECT_ID_NULL {
+        let target_boma = sv_battle_object::module_accessor(target_id);
+        let hip_pos = &mut Vector3f{ x: 0.0, y: 0.0, z: 0.0 };
+        ModelModule::joint_global_position(target_boma, Hash40::new("hip"), hip_pos, false);
+        target_x = hip_pos.x+0.0;
+        target_y = (hip_pos.y+0.0).max(target_y);
+    } 
+    println!("Homing in on {target_id} at {target_x},{target_y}");
+    //println!("{} > {target_y}",pos.y);
     
-    return original;
+    let mut direction_full = Vector2f{x:target_x-pos.x, y: (target_y-pos.y)};
+    let direction_len = sv_math::vec2_length(direction_full.x,direction_full.y);
+    let direction = Vector2f{x:direction_full.x/direction_len,y:direction_full.y/direction_len};
+    let speed = (direction_len*0.1).clamp(1.0, 4.0);
+
+    let speed_x = direction.x*speed;
+    let speed_y = (direction.y*speed).max(1.0);
+
+
+    println!("{variation_as_str} Pikmin (#{hold_num}) Speed: {speed_x},{speed_y}");
+    sv_kinetic_energy!(
+        set_speed,
+        weapon,
+        WEAPON_KINETIC_ENERGY_RESERVE_ID_NORMAL,
+        speed_x,//*lr,
+        speed_y
+    );
+    
+    return weapon.fastshift(L2CValue::Ptr(pikmin_special_s_loop as *const () as _)); 
+    //return 0.into();
 }
 
+pub unsafe extern "C" fn pikmin_special_s_loop(weapon: &mut L2CWeaponCommon) -> L2CValue {
+
+    if !weapon.is_grounded() {
+        if weapon.global_table[STATUS_FRAME].get_i32() > 300 {
+            weapon.change_status(WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S_LANDING.into(), false.into());
+            return 1.into();
+        }
+    }
+    else {
+        if WorkModule::is_flag(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_STATUS_SPECIAL_S_WORK_FLAG_LANDING) {
+            weapon.change_status(WEAPON_PIKMIN_PIKMIN_STATUS_KIND_SPECIAL_S_LANDING.into(), false.into());
+            return 1.into();
+        }
+    }
+    0.into()
+}
 
 pub unsafe extern "C" fn pikmin_catch_cut_pre_inner(weapon: &mut L2CWeaponCommon) -> bool {
     let owner = get_owner_boma(weapon);
@@ -824,7 +901,8 @@ pub fn install() {
         .status(Main, *FIGHTER_STATUS_KIND_THROW, throw_main)
         .on_line(Main, olimar_frame)
     .install();
-    smashline::Agent::new("pikmin_pikmin")
+    let agent_pikmin = &mut smashline::Agent::new("pikmin_pikmin");
+    agent_pikmin
         .acmd("game_catchspecial", pikmin_game_catchspecial,Priority::Default)
         .acmd("game_catchspecial_y", pikmin_game_catchspecial,Priority::Default)
         .acmd("game_catchspecial_b", pikmin_game_catchspecial,Priority::Default)
@@ -835,7 +913,11 @@ pub fn install() {
         .acmd("sound_catchspecial_b", pikmin_sound_catchspecial,Priority::Default)
         .acmd("sound_catchspecial_w", pikmin_sound_catchspecial,Priority::Default)
         .acmd("sound_catchspecial_v", pikmin_sound_catchspecial,Priority::Default)
-        
+
+        .acmd("game_spscharge_v", pikmin_game_spscharge_v,Priority::Default)
+        .acmd("game_spsgrabattack_v", pikmin_game_spsgrabattack_v,Priority::Default)
+        .acmd("effect_spsgrabattack_v", pikmin_effect_spsgrabattack_v,Priority::Default)
+    
         .status(Main, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_THROW_F, pikmin_throw_f_main)
         .status(Main, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_THROW_F_SUB, pikmin_throw_f_sub_main)
 
