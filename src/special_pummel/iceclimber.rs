@@ -18,7 +18,7 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 10.0);
     if macros::is_excute(agent) {
         WorkModule::on_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_STALL);
-        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 0.75, 366, 0, 10,50, 5.0, 0.0, 6.5, 10.0, None, None, None, 0.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 4, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_FREEZE, *ATTACK_REGION_HAMMER);
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 0.75, 366, 0, 10,50, 5.0, 0.0, 6.5, 10.0, None, None, None, 0.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 4, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_rush"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_FREEZE, *ATTACK_REGION_HAMMER);
         //AttackModule::set_catch_only_all(agent.module_accessor, true, false);
         AttackModule::set_no_uniq_effect_all(agent.module_accessor, true, false);
     }
@@ -130,6 +130,7 @@ unsafe extern "C" fn expression_catchspecial(agent: &mut L2CAgentBase) {
 }
 
 unsafe extern "C" fn game_catchspecial_nana(agent: &mut L2CAgentBase) {
+    println!("Yo?");
     if macros::is_excute(agent) {
         println!("Yo?");
     }
@@ -281,7 +282,9 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
             return fighter.sub_shift_status_main(L2CValue::Ptr(throw_sp_main_loop as *const () as _));
         }
     }
-    fighter.status_Throw_Sub();
+    else {
+        fighter.status_Throw_Sub();
+    }
     fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_Throw_Main as *const () as _))
 }
 
@@ -348,7 +351,7 @@ unsafe extern "C" fn bliz_init(weapon: &mut L2CWeaponCommon) -> L2CValue {
 }
 
 pub fn install_helper(agent: &mut smashline::Agent, article: i32) {
-    if article < *WEAPON_KIND_POPO_CONDOR {
+    if article < *WEAPON_KIND_POPO_CONDOR || true {
         agent.status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_uniq);
         agent.status(Main, *FIGHTER_STATUS_KIND_THROW, throw_main_uniq);
     
@@ -357,6 +360,7 @@ pub fn install_helper(agent: &mut smashline::Agent, article: i32) {
         agent.acmd("sound_catchspecial", sound_catchspecial,Priority::Default);
         agent.acmd("expression_catchspecial", expression_catchspecial,Priority::Default);
 
+        agent.acmd("game_catchspecialnana", game_catchspecial_nana,Priority::Default);
         agent.acmd("game_catchspecial_nana", game_catchspecial_nana,Priority::Default);
         agent.acmd("effect_catchspecial_nana", effect_catchspecial_nana,Priority::Default);
         agent.acmd("sound_catchspecial_nana", sound_catchspecial_nana,Priority::Default);

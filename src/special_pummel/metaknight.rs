@@ -53,6 +53,11 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
         //KineticModule::change_kinetic(agent.module_accessor, *FIGHTER_KINETIC_TYPE_METAKNIGHT_SPECIAL_LW_FREE_MOVE);
         JostleModule::set_status(agent.module_accessor, false);
         macros::WHOLE_HIT(agent, *HIT_STATUS_XLU);
+        let capture_id = WorkModule::get_int64(agent.module_accessor,FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID) as u64;
+        if capture_id != OBJECT_ID_NULL as u64{
+            let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
+            HitModule::set_status_all(capture_boma,HitStatus(*HIT_STATUS_INVINCIBLE),0);
+        }
     }
     frame(agent.lua_state_agent, 27.0);
     if macros::is_excute(agent) {
@@ -115,22 +120,30 @@ unsafe extern "C" fn expression_catchspecial(agent: &mut L2CAgentBase) {
 
 unsafe extern "C" fn game_catchspecialf(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
-        JostleModule::set_status(agent.module_accessor, false);
+        JostleModule::set_status(agent.module_accessor, true);
+        macros::WHOLE_HIT(agent, *HIT_STATUS_INVINCIBLE);
     }
     frame(agent.lua_state_agent, 2.0);
     if macros::is_excute(agent) {
-        WorkModule::on_flag(agent.module_accessor, *FIGHTER_METAKNIGHT_STATUS_SPECIAL_LW_ATTACK_FLAG_NO_HOP);
+        //WorkModule::on_flag(agent.module_accessor, *FIGHTER_METAKNIGHT_STATUS_SPECIAL_LW_ATTACK_FLAG_NO_HOP);
         ArticleModule::change_motion(agent.module_accessor, *FIGHTER_METAKNIGHT_GENERATE_ARTICLE_MANTLE, Hash40::new("special_air_lw_f"), false, -1.0);
         JostleModule::set_status(agent.module_accessor, true);
     }
     frame(agent.lua_state_agent, 6.0);
     if macros::is_excute(agent) {
+        let capture_id = WorkModule::get_int64(agent.module_accessor,FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID) as u64;
+        if capture_id != OBJECT_ID_NULL as u64 {
+            let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
+            HitModule::set_status_all(capture_boma,HitStatus(*HIT_STATUS_NORMAL),0);
+            MotionModule::set_rate(capture_boma, 1.0);
+        }
         macros::ATTACK(agent, 0, 0, Hash40::new("top"), 13.0, 53, 80, 0, 40, 6.5, 0.0, 7.0, 8.0, Some(0.0), Some(7.0), Some(12.0), 1.4, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_F, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_cutup"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_CUTUP, *ATTACK_REGION_SWORD);
     }
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
         AttackModule::clear_all(agent.module_accessor);
-        WorkModule::on_flag(agent.module_accessor, *FIGHTER_METAKNIGHT_STATUS_SPECIAL_LW_ATTACK_FLAG_SITUATION_CHANGE);
+        //WorkModule::on_flag(agent.module_accessor, *FIGHTER_METAKNIGHT_STATUS_SPECIAL_LW_ATTACK_FLAG_SITUATION_CHANGE);
+        macros::WHOLE_HIT(agent, *HIT_STATUS_NORMAL);
     }
     frame(agent.lua_state_agent, 8.0);
     if macros::is_excute(agent) {
@@ -143,7 +156,8 @@ unsafe extern "C" fn game_catchspecialf(agent: &mut L2CAgentBase) {
 }
 unsafe extern "C" fn game_catchspecialb(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
-        JostleModule::set_status(agent.module_accessor, false);
+        JostleModule::set_status(agent.module_accessor, true);
+        macros::WHOLE_HIT(agent, *HIT_STATUS_INVINCIBLE);
     }
     frame(agent.lua_state_agent, 2.0);
     if macros::is_excute(agent) {
@@ -152,12 +166,19 @@ unsafe extern "C" fn game_catchspecialb(agent: &mut L2CAgentBase) {
     }
     frame(agent.lua_state_agent, 6.0);
     if macros::is_excute(agent) {
+        let capture_id = WorkModule::get_int64(agent.module_accessor,FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID) as u64;
+        if capture_id != OBJECT_ID_NULL as u64 {
+            let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
+            HitModule::set_status_all(capture_boma,HitStatus(*HIT_STATUS_NORMAL),0);
+            MotionModule::set_rate(capture_boma, 1.0);
+        }
         macros::ATTACK(agent, 0, 0, Hash40::new("top"), 13.0, 53, 80, 0, 40, 6.5, 0.0, 7.0, -8.0, Some(0.0), Some(7.0), Some(-12.0), 1.0, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_F, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_cutup"), *ATTACK_SOUND_LEVEL_L, *COLLISION_SOUND_ATTR_CUTUP, *ATTACK_REGION_SWORD);
     }
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
         AttackModule::clear_all(agent.module_accessor);
-        WorkModule::on_flag(agent.module_accessor, *FIGHTER_METAKNIGHT_STATUS_SPECIAL_LW_ATTACK_FLAG_SITUATION_CHANGE);
+        //WorkModule::on_flag(agent.module_accessor, *FIGHTER_METAKNIGHT_STATUS_SPECIAL_LW_ATTACK_FLAG_SITUATION_CHANGE);
+        macros::WHOLE_HIT(agent, *HIT_STATUS_NORMAL);
     }
     frame(agent.lua_state_agent, 8.0);
     if macros::is_excute(agent) {
@@ -199,7 +220,8 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
         let capture_id = WorkModule::get_int64(fighter.module_accessor,FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID) as u64;
         if capture_id != OBJECT_ID_NULL as u64{
             let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
-            MotionModule::change_motion(capture_boma, Hash40::new("damage_lw_3"),0.0,0.8,false,0.0,false,false); 
+            MotionModule::change_motion(capture_boma, Hash40::new("damage_lw_3"),5.0,0.6,false,0.0,false,false); 
+            HitModule::set_status_all(capture_boma,HitStatus(*HIT_STATUS_INVINCIBLE),0);
         }
         return fighter.sub_shift_status_main(L2CValue::Ptr(throw_sp_main_loop_uniq as *const () as _))
     }
@@ -238,8 +260,9 @@ pub unsafe extern "C" fn throw_sp_main_loop_uniq(fighter: &mut L2CFighterCommon)
             if capture_id != OBJECT_ID_NULL as u64 {
                 let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
                 let capture_pos = *PostureModule::pos(capture_boma);
+                let add_x = if throw_F {-2.0} else {2.0};
                 PostureModule::set_pos(fighter.module_accessor, 
-                    &Vector3f::new(capture_pos.x + (lr*2.0), capture_pos.y, capture_pos.z)
+                    &Vector3f::new(capture_pos.x + (add_x*lr), capture_pos.y, capture_pos.z)
                 );
             }
             MotionModule::change_motion(fighter.module_accessor, motion, 0.0, 1.0, false, 0.0, false, false);

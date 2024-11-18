@@ -131,7 +131,7 @@ pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon)
         else {
             let mut next_status = FIGHTER_STATUS_KIND_WAIT;
 
-            if [*FIGHTER_KIND_PFUSHIGISOU,*FIGHTER_KIND_WOLF]
+            if [*FIGHTER_KIND_KIRBY,*FIGHTER_KIND_PFUSHIGISOU,*FIGHTER_KIND_WOLF]
             .contains(&fighter_kind) {next_status = FIGHTER_STATUS_KIND_SPECIAL_N;}
 
             else if [*FIGHTER_KIND_GAMEWATCH,*FIGHTER_KIND_ROBOT,*FIGHTER_KIND_JACK]

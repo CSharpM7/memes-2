@@ -2,7 +2,10 @@ use crate::imports::imports_acmd::*;
 use crate::special_pummel::imports::*;
 
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
+    frame(agent.lua_state_agent, 1.0);
+    FT_MOTION_RATE_RANGE(agent, 1.0, 11.0, 5.0);
     frame(agent.lua_state_agent, 11.0);
+    FT_MOTION_RATE(agent,1.0);
     if macros::is_excute(agent) {
         macros::ATTACK(agent, 0, 0, Hash40::new("top"), 1.6, 361, 100, 30, 0, 7.0, 0.0, 10.0, 11.0, None, None, None, 0.5, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 6, false, false, false, true, false, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_fire"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_FIRE, *ATTACK_REGION_NONE);
         AttackModule::set_catch_only_all(agent.module_accessor, true, false);

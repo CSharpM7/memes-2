@@ -60,11 +60,22 @@ unsafe extern "C" fn expression_catchspecial(agent: &mut L2CAgentBase) {
     }
 }
 
+pub unsafe extern "C" fn poison_shoot_init(weapon: &mut L2CWeaponCommon) -> L2CValue {
+    let owner = get_owner_boma(weapon);
+    let owner_status = StatusModule::status_kind(owner);
+    if owner_status != *FIGHTER_STATUS_KIND_CATCH_ATTACK {
+        return smashline::original_status(Init, weapon, *WEAPON_PACKUN_POISONBREATH_STATUS_KIND_SHOOT)(weapon);
+    }
+    return 0.into();
+}
 pub fn install() {
     smashline::Agent::new("packun")
         .acmd("game_catchspecial", game_catchspecial,Priority::Default)
         .acmd("effect_catchspecial", effect_catchspecial,Priority::Default)
         .acmd("sound_catchspecial", sound_catchspecial,Priority::Default)
         .acmd("expression_catchspecial", expression_catchspecial,Priority::Default)
+    .install();
+    smashline::Agent::new("packun_poisonbreath")
+        .status(Init, *WEAPON_PACKUN_POISONBREATH_STATUS_KIND_SHOOT, poison_shoot_init)
     .install();
 }

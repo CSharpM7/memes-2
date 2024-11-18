@@ -4,6 +4,11 @@ use crate::special_pummel::imports::*;
 
 pub const REVENGE_DAMAGE: f32 = 5.0;
 pub const REVENGE_BASE_FACTOR: f32 = 0.5;
+pub const REVENGE_INITIAL_ADD: f32 = 0.75;
+/*
+Incin uses a modified formula to his revenge, so this move
+rewards less meter if not stacking revenge
+*/
 pub const FIGHTER_GAOGAEN_STATUS_CATCH_FLAG_REVENGE: i32 = 0x2100000E;
 
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
@@ -14,7 +19,7 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
         WorkModule::on_flag(agent.module_accessor, FIGHTER_GAOGAEN_STATUS_CATCH_FLAG_REVENGE);
-        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 2.4, 0, 0, 10, 70, 16.0, 0.0, 11.0, -1.0, None, None, None, 1.0, 0.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_POS, true, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_fire"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_FIRE, *ATTACK_REGION_NONE);
+        macros::ATTACK(agent, 0, 0, Hash40::new("top"), 2.4, 361, 0, 10, 60, 16.0, 0.0, 11.0, -1.0, None, None, None, 1.0, 0.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_POS, true, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_fire"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_FIRE, *ATTACK_REGION_NONE);
     }
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
@@ -75,7 +80,7 @@ pub unsafe fn add_revenge(fighter: &mut L2CFighterCommon) {
 
     if !has_revenge {
         WorkModule::on_flag(fighter.module_accessor, *FIGHTER_GAOGAEN_INSTANCE_WORK_ID_FLAG_IS_REVENGE);
-        new_rate = (damage_rate) + (1.0);
+        new_rate = (damage_rate) + (REVENGE_INITIAL_ADD); //was 1.0
     }
     else {
         new_rate = rate + (damage_rate* (1.0-base*(rate-1.0)));
