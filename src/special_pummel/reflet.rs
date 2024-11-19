@@ -15,6 +15,19 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
         if !WorkModule::is_flag(agent.module_accessor,*FIGHTER_REFLET_INSTANCE_WORK_ID_FLAG_SPECIAL_FAILURE) {
             WorkModule::on_flag(agent.module_accessor, FIGHTER_REFLET_STATUS_CATCH_FLAG_HEAL);
+            let mut current_frame = 22.0;
+            for f in 0..7 {
+                if macros::is_excute(agent) {
+                    macros::ATTACK(agent, 1, 1, Hash40::new("throw"), 2.0, 60, 100, 100, 0, 8.0, 0.0, -1.0, 0.0, None, None, None, 0.0, 0.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 8, false, false, false, true, false, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_purple"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_FIRE, *ATTACK_REGION_MAGIC);
+                }
+                if macros::is_excute(agent) {
+                    current_frame+=6.0;
+                    if current_frame >= 53.0 {
+                        break;
+                    }
+                }
+                wait(agent.lua_state_agent, 6.0);
+            }
             frame(agent.lua_state_agent, 54.0);
         }
     }
@@ -124,7 +137,7 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
 
 pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     let rehit = WorkModule::get_int(fighter.module_accessor, FIGHTER_REFLET_STATUS_CATCH_WORK_INT_REHIT);
-    if AttackModule::is_attack(fighter.module_accessor, 1, true) 
+    if AttackModule::is_attack(fighter.module_accessor, 1, false) 
     && rehit > 0 {
         let attack_data = AttackModule::attack_data(fighter.module_accessor, 1, false);
         let attack_power = (*attack_data).power;

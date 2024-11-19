@@ -189,7 +189,7 @@ pub unsafe extern "C" fn catch_special_main_loop(fighter: &mut L2CFighterCommon)
         WorkModule::off_flag(opponent,*FIGHTER_STATUS_CAPTURE_PULLED_WORK_FLAG_JUMP);
 
         let mut clatter = ControlModule::get_clatter_time(opponent, 0);
-        println!("Clatter: {clatter}");
+        //println!("Clatter: {clatter}");
         let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
         if disable_clatter {
             clatter = WorkModule::get_float(fighter.module_accessor,FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
@@ -215,10 +215,34 @@ unsafe extern "C" fn attack_mtrans_pre_process(fighter: &mut L2CFighterCommon) {
         };
         let power = lerp_pummel_power(fighter,1.25,1.5);
         AttackModule::set_power_mul_status(fighter.module_accessor, power);
-        
         MotionModule::change_motion(fighter.module_accessor, Hash40::new(new_motion), 0.0, 1.0, false, 0.0, false, false);
     }
 }
+
+#[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_status_Attack_Main)]
+unsafe extern "C" fn attack_main(fighter: &mut L2CFighterCommon) {
+    attack_main_inner(fighter);
+}
+
+pub unsafe extern "C" fn attack_main_dev(fighter: &mut L2CFighterCommon) -> L2CValue {
+    fighter.status_Attack();
+    return fighter.sub_shift_status_main(L2CValue::Ptr(attack_main_inner as *const () as _));
+}
+
+pub unsafe extern "C" fn attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
+    if fighter.global_table[PREV_STATUS_KIND].get_i32() == *FIGHTER_STATUS_KIND_CATCH_ATTACK {
+        if AttackModule::is_attack(fighter.module_accessor, 0, false)  {
+            for i in 0..6 {
+                if AttackModule::is_attack(fighter.module_accessor, i, false)  {
+                    (*AttackModule::attack_data(fighter.module_accessor, i, false)).stop_frame = 0.5;
+                }
+                else {break;}
+            }
+        }
+    }
+    return fighter.status_Attack_Main_button(CONTROL_PAD_BUTTON_ATTACK.into(),L2CValue::Ptr(L2CFighterCommon_change_status_jump_mini_attack as *const () as _));
+}
+
 
 #[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_status_Attack100_Main_uniq_func)]
 unsafe extern "C" fn attack_100_main(fighter: &mut L2CFighterCommon, param_1: L2CValue) {
@@ -253,6 +277,7 @@ fn nro_hook(info: &skyline::nro::NroInfo) {
             println!("Install hooks");
             skyline::install_hooks!(
                 attack_mtrans_pre_process,
+                attack_main,
                 attack_100_main,
                 status_CatchAttack,
             );
@@ -272,6 +297,7 @@ pub fn install() {
 
     let common = &mut Agent::new("fighter");
     common.on_start(agent_start);
+    common.status(Main, *FIGHTER_STATUS_KIND_ATTACK, attack_main_dev);
     
     common.install();
 }
