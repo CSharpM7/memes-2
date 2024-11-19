@@ -297,7 +297,7 @@ pub fn install() {
 
     let common = &mut Agent::new("fighter");
     common.on_start(agent_start);
-    common.status(Main, *FIGHTER_STATUS_KIND_ATTACK, attack_main_dev);
+    //common.status(Main, *FIGHTER_STATUS_KIND_ATTACK, attack_main_dev);
     
     common.install();
 }

@@ -20,6 +20,10 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     {
         ArticleModule::generate_article(agent.module_accessor, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4, false, -1);
     }
+    frame(agent.lua_state_agent, 14.0);
+    FT_MOTION_RATE_RANGE(agent, 14.0, 24.0, 15.0);
+    frame(agent.lua_state_agent, 24.0);
+    FT_MOTION_RATE(agent,1.0);
     frame(agent.lua_state_agent, 38.0);
     if macros::is_excute(agent) {
         if is_constraint_article(fighter, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL)) {
@@ -32,6 +36,10 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
             ArticleModule::shoot(agent.module_accessor, *FIGHTER_SNAKE_GENERATE_ARTICLE_C4, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL), false);
         }
     }
+    frame(agent.lua_state_agent, 40.0);
+    FT_MOTION_RATE_RANGE(agent, 40.0, 55.0, 20.0);
+    frame(agent.lua_state_agent, 55.0);
+    FT_MOTION_RATE(agent,1.0);
 }
 
 unsafe extern "C" fn effect_catchspecial(agent: &mut L2CAgentBase) {
