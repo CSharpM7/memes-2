@@ -513,8 +513,10 @@ pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) 
         let mut clatter = ControlModule::get_clatter_time(opponent, 0);
         //println!("Clatter: {clatter}");
         if disable_clatter {
-            clatter = WorkModule::get_float(fighter.module_accessor,FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
-            ControlModule::set_clatter_time(opponent, clatter,0);
+            //clatter = WorkModule::get_float(fighter.module_accessor,FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
+            if clatter <= 1.0 {
+                ControlModule::set_clatter_time(opponent, 1.0,0);
+            }
         }
         else {
             WorkModule::set_float(fighter.module_accessor, clatter, FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
