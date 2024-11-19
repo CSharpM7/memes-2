@@ -193,7 +193,10 @@ pub unsafe extern "C" fn catch_special_main_loop(fighter: &mut L2CFighterCommon)
         let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
         if disable_clatter {
             clatter = WorkModule::get_float(fighter.module_accessor,FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
-            ControlModule::set_clatter_time(opponent, clatter,0);
+            if clatter <= 1.0 {
+                ControlModule::set_clatter_time(opponent, 1.0,0);
+            }
+            //ControlModule::set_clatter_time(opponent, clatter,0);
         }
         else {
             WorkModule::set_float(fighter.module_accessor, clatter, FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
@@ -275,11 +278,12 @@ fn nro_hook(info: &skyline::nro::NroInfo) {
     if info.name == "common" {
         #[cfg(not(feature = "dev"))]{
             println!("Install hooks");
-            skyline::install_hooks!(
-                attack_mtrans_pre_process,
+            skyline::install_hooks!(.
+                status_CatchAttack,
+                    
+                attack_mtrans_pre_process, //HDR
                 attack_main,
                 attack_100_main,
-                status_CatchAttack,
             );
         }
         #[cfg(feature = "dev")]
