@@ -8,7 +8,7 @@ pub const FIGHTER_INSTANCE_CATCH_ATTACK_COUNT : i32 = 0x100000ED;
 pub const FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER: i32 = 0x2100000B;
 pub const FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP: i32 = 0x1000007;
 
-pub const PUMMEL_PENALTY_COUNT_MIN: i32 = 0; //0 removes penalty. 99 makes it always max penalty
+pub const PUMMEL_PENALTY_COUNT_MIN: i32 = 0; //0 removes penalty (b). 99 makes it always max penalty (a)
 pub const PUMMEL_JAB_PENALTY_COUNT_MIN: i32 = 0; 
 pub const PUMMEL_MAX_PENALTY_FACTOR: f32 = 0.75;
 
@@ -83,15 +83,6 @@ pub unsafe fn catch_attack_check_special(fighter: &mut L2CFighterCommon) -> bool
 // STATUS
 #[skyline::hook(replace = smash::lua2cpp::L2CFighterCommon_status_CatchAttack)]
 unsafe fn status_CatchAttack(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
-    if fighter_kind == *FIGHTER_KIND_PIKMIN {
-        //Assume that if Olimar grabbed with no Pikmin, it must mean he is a custom fighter
-        //If Olimar is vanilla though, changing this hook can crash the game
-        let hold_pikmin_num = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_NUM);
-        if hold_pikmin_num != 0 {
-            return original!()(fighter);
-        }
-    }
     return catch_attack_main_inner(fighter);
 }
 pub unsafe extern "C" fn catch_attack_main_new(fighter: &mut L2CFighterCommon, call_original_first: bool) -> L2CValue {
@@ -110,25 +101,18 @@ pub unsafe extern "C" fn catch_attack_main_new(fighter: &mut L2CFighterCommon, c
     }
 }
 pub unsafe extern "C" fn catch_attack_main_inner(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
-
     WorkModule::off_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
-    if catch_attack_check_special_input(fighter) && fighter_kind != *FIGHTER_KIND_PIKMIN {
+    if catch_attack_check_special_input(fighter) {
         ControlModule::clear_command(fighter.module_accessor, false);
 
         if catch_attack_check_special_anim(fighter) {
-            WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
-            WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
-
-            let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
-            let mut clatter = ControlModule::get_clatter_time(opponent, 0);
-            let clatter_factor = lerp_pummel_power(fighter,PUMMEL_MAX_PENALTY_FACTOR,1.0);
-            ControlModule::set_clatter_time(opponent, clatter*clatter_factor,0);
+            catch_special_main(fighter);
 
             fighter.status_CatchAttack_common(L2CValue::Hash40(Hash40::new("catch_special")));
             return fighter.sub_shift_status_main(L2CValue::Ptr(catch_special_main_loop as *const () as _))
         }
         else {
+            let fighter_kind = utility::get_kind(&mut *fighter.module_accessor);
             let mut next_status = FIGHTER_STATUS_KIND_WAIT;
 
             if [*FIGHTER_KIND_KIRBY,*FIGHTER_KIND_PFUSHIGISOU,*FIGHTER_KIND_WOLF]
@@ -180,20 +164,40 @@ pub unsafe extern "C" fn catch_attack_main_default(fighter: &mut L2CFighterCommo
 pub unsafe extern "C" fn catch_attack_main_default_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
     return fighter.status_CatchAttack_Main();
 }
+pub unsafe extern "C" fn catch_special_main(fighter: &mut L2CFighterCommon) {
+    WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
+    WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
+
+    let opponent_id = LinkModule::get_node_object_id(fighter.module_accessor, *LINK_NO_CAPTURE) as u32;
+    if opponent_id != OBJECT_ID_NULL {
+        let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
+        let opponent_damage = DamageModule::damage(opponent, 0);
+        let mut clatter = ControlModule::get_clatter_time(opponent, 0);
+        let clatter_factor = lerp_pummel_power(fighter,PUMMEL_MAX_PENALTY_FACTOR,1.0);
+        let cancel_frame = FighterMotionModuleImpl::get_cancel_frame(fighter.module_accessor,Hash40::new("catch_special"),true);
+        let bonus_t = (opponent_damage/75.0).min(1.0);
+        let clatter_bonus = lerp(0.0,cancel_frame,bonus_t);
+        println!("New clatter: {clatter}*{clatter_factor} + {clatter_bonus}.");
+        ControlModule::set_clatter_time(opponent, (clatter*clatter_factor)+clatter_bonus,0);
+    }
+}
 
 pub unsafe extern "C" fn catch_special_main_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
-    WorkModule::off_flag(opponent,*FIGHTER_STATUS_CAPTURE_PULLED_WORK_FLAG_JUMP);
+    let opponent_id = LinkModule::get_node_object_id(fighter.module_accessor, *LINK_NO_CAPTURE) as u32;
+    if opponent_id != OBJECT_ID_NULL {
+        let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
+        WorkModule::off_flag(opponent,*FIGHTER_STATUS_CAPTURE_PULLED_WORK_FLAG_JUMP);
 
-    let mut clatter = ControlModule::get_clatter_time(opponent, 0);
-    //println!("Clatter: {clatter}");
-    let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
-    if disable_clatter {
-        clatter = WorkModule::get_float(fighter.module_accessor,FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
-        ControlModule::set_clatter_time(opponent, clatter,0);
-    }
-    else {
-        WorkModule::set_float(fighter.module_accessor, clatter, FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
+        let mut clatter = ControlModule::get_clatter_time(opponent, 0);
+        println!("Clatter: {clatter}");
+        let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
+        if disable_clatter {
+            clatter = WorkModule::get_float(fighter.module_accessor,FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
+            ControlModule::set_clatter_time(opponent, clatter,0);
+        }
+        else {
+            WorkModule::set_float(fighter.module_accessor, clatter, FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
+        }
     }
     return fighter.status_CatchAttack_Main();
 }

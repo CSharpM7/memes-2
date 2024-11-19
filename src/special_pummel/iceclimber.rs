@@ -25,7 +25,6 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 19.0);
     if macros::is_excute(agent) {
         WorkModule::off_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_STALL);
-        WorkModule::on_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER);
         AttackModule::clear_all(agent.module_accessor);
     }
     frame(agent.lua_state_agent, 24.0);
@@ -33,6 +32,7 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
         macros::CHECK_FINISH_CAMERA(agent, 16, 9);
         lua_bind::FighterCutInManager::set_throw_finish_zoom_rate(singletons::FighterCutInManager(), 1.5);
         lua_bind::FighterCutInManager::set_throw_finish_offset(singletons::FighterCutInManager(), Vector3f{x: 0.0, y: 0.0, z: 0.0});
+        WorkModule::on_flag(agent.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER);
     }
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {      
@@ -220,8 +220,7 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
     if !is_nana && catch_attack_check_special(fighter) {
 
         //DEFAULT POPO STUFF
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL); 
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL); 
+        catch_special_main(fighter);
 
         if !is_nana_available(fighter) {return catch_attack_uniq_default(fighter);}
         if !LinkModule::is_link(fighter.module_accessor, *FIGHTER_POPO_LINK_NO_PARTNER) {return catch_attack_uniq_default(fighter);}
@@ -268,6 +267,7 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
     if (StatusModule::prev_status_kind(fighter.module_accessor, 0) == *FIGHTER_STATUS_KIND_CATCH_ATTACK || is_nana) 
     && WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
         //println!("Spummel Throw Popo: {is_nana}");
+        WorkModule::off_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER);
         WorkModule::set_int64(fighter.module_accessor, hash40("throw_f") as i64, *FIGHTER_STATUS_CATCH_WAIT_WORK_INT_MOTION_KIND);
         fighter.status_Throw_Sub();
 
@@ -277,7 +277,6 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
         MotionModule::change_motion(fighter.module_accessor,motion, frame, rate, false, 0.0, false, false);
 
         if !is_nana {
-            WorkModule::off_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER);
             WorkModule::set_int(fighter.module_accessor, 0, FIGHTER_POPO_STATUS_THROW_WORK_INT_STATE);
             return fighter.sub_shift_status_main(L2CValue::Ptr(throw_sp_main_loop as *const () as _));
         }
@@ -289,22 +288,25 @@ pub unsafe extern "C" fn throw_main_uniq(fighter: &mut L2CFighterCommon) -> L2CV
 }
 
 unsafe extern "C" fn throw_sp_main_loop(fighter: &mut L2CFighterCommon) -> L2CValue {
-    if CatchModule::is_catch(fighter.module_accessor)
-    && !WorkModule::is_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER) {
-        let opponent = get_grabbed_opponent_boma(fighter.module_accessor);
-        let rate = WorkModule::get_float(fighter.module_accessor,*FIGHTER_STATUS_THROW_WORK_FLOAT_MOTION_RATE);
-        MotionModule::set_rate(opponent, rate);
-        let mut clatter = ControlModule::get_clatter_time(opponent, 0);
-        //println!("Clatter: {clatter}");
-        if clatter <= 0.0 {
-            fighter.change_status(FIGHTER_STATUS_KIND_CATCH_CUT.into(),false.into());
-            StatusModule::change_status_request(opponent, *FIGHTER_STATUS_KIND_CAPTURE_JUMP, false);
-            if is_nana_near(fighter) {
-                let partner_id = LinkModule::get_node_object_id(fighter.module_accessor, *FIGHTER_POPO_LINK_NO_PARTNER) as u32;
-                let partner_boma = sv_battle_object::module_accessor(partner_id);
-                if StatusModule::status_kind(partner_boma) == *FIGHTER_STATUS_KIND_THROW {
-                    SoundModule::stop_se_all(partner_boma, 0,false,false);
-                    StatusModule::change_status_request(partner_boma, *FIGHTER_STATUS_KIND_CATCH_CUT, false);
+    if !WorkModule::is_flag(fighter.module_accessor, FIGHTER_POPO_STATUS_THROW_FLAG_DISABLE_CLATTER) {
+        let opponent_id = WorkModule::get_int64(fighter.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_OBJECT) as u32;
+        if opponent_id != OBJECT_ID_NULL {
+            let opponent = sv_battle_object::module_accessor(opponent_id as u32);
+            let rate = WorkModule::get_float(fighter.module_accessor,*FIGHTER_STATUS_THROW_WORK_FLOAT_MOTION_RATE);
+            MotionModule::set_rate(opponent, rate);
+            let mut clatter = ControlModule::get_clatter_time(opponent, 0);
+            println!("Throw Clatter: {clatter}");
+            if clatter <= 0.0 {
+                AttackModule::clear_all(fighter.module_accessor);
+                fighter.change_status(FIGHTER_STATUS_KIND_CATCH_CUT.into(),false.into());
+                StatusModule::change_status_request(opponent, *FIGHTER_STATUS_KIND_CAPTURE_JUMP, false);
+                if is_nana_near(fighter) {
+                    let partner_id = LinkModule::get_node_object_id(fighter.module_accessor, *FIGHTER_POPO_LINK_NO_PARTNER) as u32;
+                    let partner_boma = sv_battle_object::module_accessor(partner_id);
+                    if StatusModule::status_kind(partner_boma) == *FIGHTER_STATUS_KIND_THROW {
+                        SoundModule::stop_se_all(partner_boma, 0,false,false);
+                        StatusModule::change_status_request(partner_boma, *FIGHTER_STATUS_KIND_CATCH_CUT, false);
+                    }
                 }
             }
         }

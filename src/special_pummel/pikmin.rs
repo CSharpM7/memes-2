@@ -133,6 +133,10 @@ FIGHTER_STATUS_THROW_FLAG_INVINCIBLE: 0x2100000D,
 ACMD
  */
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
+    frame(agent.lua_state_agent, 1.0); 
+    FT_MOTION_RATE_RANGE(agent, 1.0, 18.0, 30.0);
+    frame(agent.lua_state_agent, 18.0); 
+    FT_MOTION_RATE(agent,1.0);
     frame(agent.lua_state_agent, 20.0); 
     if macros::is_excute(agent) {
         macros::WHOLE_HIT(agent, *HIT_STATUS_INVINCIBLE);
@@ -140,6 +144,9 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 21.0); 
     if macros::is_excute(agent) {
         WorkModule::on_flag(agent.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_FLAG_START_THROW);
+    }
+    frame(agent.lua_state_agent, 27.0); 
+    if macros::is_excute(agent) {
         WorkModule::on_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
     }
     frame(agent.lua_state_agent, 49.0);
@@ -196,8 +203,7 @@ unsafe extern "C" fn pikmin_game_catchspecial(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
         is_sub = WorkModule::get_int(agent.module_accessor,*WEAPON_PIKMIN_PIKMIN_STATUS_THROW_WORK_INT_MOTION_START_DELAY_FRAME) != 0;
         //println!("{variation_as_str} is Locked and loaded: {}",!is_sub);
-        WorkModule::on_flag(agent.module_accessor, WEAPON_PIKMIN_PIKMIN_STATUS_THROW_WORK_FLAG_DISABLE_CLATTER);
-        AttackModule::set_reaction_mul(agent.module_accessor,10.0);
+        //WorkModule::on_flag(agent.module_accessor, WEAPON_PIKMIN_PIKMIN_STATUS_THROW_WORK_FLAG_DISABLE_CLATTER);
     }
     frame(agent.lua_state_agent, 3.0);
     FT_MOTION_RATE_RANGE(agent,3.0,19.0,15.0);
@@ -285,6 +291,53 @@ unsafe extern "C" fn pikmin_effect_spsgrabattack_v(agent: &mut L2CAgentBase) {
 /*
 STATUS
 */
+
+pub unsafe extern "C" fn sync_lr_pikmin(fighter: &mut L2CFighterCommon, p: i32) -> bool {
+    let olima = fighter.global_table[MODULE_ACCESSOR].get_ptr() as *mut FighterModuleAccessor;
+    let oLRmar = PostureModule::lr(fighter.module_accessor);
+    let pikmin_id = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_OBJECT_ID_0+p) as u32;
+    if pikmin_id == 0 {
+        println!("No id");
+        return false;
+    }
+
+    let link_node = *FIGHTER_PIKMIN_LINK_NO_PIKMIN;
+    let is_link = LinkModule::link(fighter.module_accessor, link_node, pikmin_id as u32);
+    if is_link & 1 != 0  {
+        let pikmin_boma = sv_battle_object::module_accessor(pikmin_id as u32);
+        let mut link_event = FighterPikminLinkEventWeaponPikminSyncLR__new_l2c_table();
+        link_event["link_event_kind_"].assign(&L2CValue::Hash40(Hash40::new("fighter_pikmin_link_event_weapon_pikmin_sync_lr")));
+        link_event["lr_"].assign(&L2CValue::F32(oLRmar));
+        let object_id = fighter.global_table[OBJECT_ID].get_u32();
+        link_event["sender_id_"].assign(&L2CValue::U32(object_id));
+        link_event_store_l2c_table(fighter, link_node.into(), link_event);
+        //LinkModule::set_attribute(fighter.module_accessor, link_node, LinkAttribute{_address: *LINK_ATTRIBUTE_REFERENCE_PARENT_STOP as u8}, true);
+        //LinkModule::set_attribute(fighter.module_accessor, link_node, LinkAttribute{_address: *LINK_ATTRIBUTE_REFERENCE_PARENT_ATTACK_STOP as u8}, true);
+        LinkModule::unlink(fighter.module_accessor, link_node);
+        return true;
+    }
+    else {
+        println!("lost pikid");
+    }
+    return false;
+}
+
+pub unsafe extern "C" fn sync_lr_pikmin_all(fighter: &mut L2CFighterCommon) -> bool {
+    let olima = fighter.global_table[MODULE_ACCESSOR].get_ptr() as *mut FighterModuleAccessor;
+    let hold_pikmin_num = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_NUM);
+    println!("Holding {hold_pikmin_num} pikmin");
+    if hold_pikmin_num <= 0 {return false;}
+    let mut p = 0;
+    for p in 0..hold_pikmin_num {
+        if !sync_lr_pikmin(fighter,p) {
+            break;
+        }        
+        //FighterSpecializer_Pikmin::hold_pikmin(olima, 3);
+        //FighterSpecializer_Pikmin::update_hold_pikmin_param(olima);
+    }
+    return true;
+}
+
 pub unsafe extern "C" fn change_status_pikmin(fighter: &mut L2CFighterCommon, p: i32, status: i32, force: bool) -> bool {
     let olima = fighter.global_table[MODULE_ACCESSOR].get_ptr() as *mut FighterModuleAccessor;
     let oLRmar = PostureModule::lr(fighter.module_accessor);
@@ -410,7 +463,6 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
             println!("Solimar");
             return fighter.status_CatchAttack();
         }
- 
         catch_attack_init_variables(fighter);
 
 
@@ -468,16 +520,6 @@ pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) 
             WorkModule::set_float(fighter.module_accessor, clatter, FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
         }
 
-        if WorkModule::get_int(fighter.module_accessor, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_COUNTDOWN) == 0 {
-            let hip_pos = &mut Vector3f{ x: 0.0, y: 0.0, z: 0.0 };
-            ModelModule::joint_global_position(opponent, Hash40::new("hip"), hip_pos, false);
-            let mut target_x = hip_pos.x;
-            let mut target_y = hip_pos.y;
-            if target_x == 0.0 && target_y == 0.0 {
-                target_x = PostureModule::pos_x(opponent);
-                target_y = PostureModule::pos_y(opponent) + 5.0;
-            }
-        }
     }
     if WorkModule::is_flag(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_FLAG_START_THROW) {
         WorkModule::off_flag(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_FLAG_START_THROW);
@@ -486,6 +528,7 @@ pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) 
         println!("Change motion for {hold_pikmin_num} pikmin");
         let mut p = 0;
         for p in 0..hold_pikmin_num {
+            sync_lr_pikmin(fighter,p);
             let link_node = *FIGHTER_PIKMIN_LINK_NO_PIKMIN_THROW;
             let pikmin_id = WorkModule::get_int(fighter.module_accessor, *FIGHTER_PIKMIN_INSTANCE_WORK_INT_PIKMIN_HOLD_PIKMIN_OBJECT_ID_0+p) as u32;
             let is_link = LinkModule::link(fighter.module_accessor, link_node, pikmin_id as u32);
@@ -498,7 +541,6 @@ pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) 
     }
     if WorkModule::is_flag(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_FLAG_CHARGE)  {
         WorkModule::off_flag(fighter.module_accessor, FIGHTER_PIKMIN_STATUS_CATCH_FLAG_CHARGE);
-        WorkModule::on_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
         /* 
         //WorkModule::set_int(fighter.module_accessor, 3, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_COUNTDOWN);
         //WorkModule::set_int(fighter.module_accessor, 1, FIGHTER_PIKMIN_STATUS_THROW_WORK_INT_CHARGE_COUNTDOWN);
@@ -517,6 +559,12 @@ pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) 
     return 0.into();//fighter.status_CatchAttack_Main();
 }
 
+pub unsafe extern "C" fn catch_attack_exit(fighter: &mut L2CFighterCommon) -> L2CValue {
+    if fighter.global_table[STATUS_KIND].get_i32() != *FIGHTER_STATUS_KIND_THROW {
+        SoundModule::stop_all_sound(fighter.module_accessor);
+    }
+    0.into()
+}
 pub unsafe extern "C" fn throw_init(fighter: &mut L2CFighterCommon) -> L2CValue {
     if !WorkModule::is_flag(fighter.module_accessor, FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
         return smashline::original_status(Init, fighter, *FIGHTER_STATUS_KIND_THROW)(fighter);
@@ -621,6 +669,22 @@ pub unsafe extern "C" fn pikmin_special_s_main(weapon: &mut L2CWeaponCommon) -> 
     let variation = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_VARIATION);
     let motion = if variation != *WEAPON_PIKMIN_PIKMIN_VARIATION_VIOLET {Hash40::new("sp_s_thrown")} else {Hash40::new("sp_s_charge")};
     MotionModule::change_motion(weapon.module_accessor, motion, 0.0, 1.0, false, 0.0, false, false);
+
+    let lr = PostureModule::lr(weapon.module_accessor);
+    let pos = *PostureModule::pos(weapon.module_accessor);
+    let lr_z = (lr-1.0)*90.0;
+    let eff =EffectModule::req(
+        weapon.module_accessor,
+        Hash40::new("sys_run_smoke"),
+        &pos,
+        &Vector3f{ x: 0.0, y: lr_z+90.0, z: 0.0 },
+        0.75,
+        0,
+        -1,
+        false,
+        0
+    ) as u32;
+    EffectModule::set_rate(weapon.module_accessor, eff, 1.5);
     /* 
     WorkModule::off_flag(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_STATUS_SPECIAL_S_WORK_FLAG_LANDING);
     let pos_y = PostureModule::pos_y(weapon.module_accessor);
@@ -639,11 +703,9 @@ pub unsafe extern "C" fn pikmin_special_s_main(weapon: &mut L2CWeaponCommon) -> 
     KineticModule::clear_speed_all(weapon.module_accessor);
     PostureModule::add_pos(weapon.module_accessor, &Vector3f::new(0.0,0.25,0.0));
 
-    let lr = PostureModule::lr(weapon.module_accessor);
-    let pos = *PostureModule::pos(weapon.module_accessor);
 
-    let mut target_x = PostureModule::pos_x(weapon.module_accessor) + PostureModule::lr(weapon.module_accessor);
-    let mut target_y = PostureModule::pos_y(weapon.module_accessor) + 1.0;
+    let mut target_x = PostureModule::pos_x(weapon.module_accessor) + PostureModule::lr(weapon.module_accessor)*15.0;
+    let mut target_y = PostureModule::pos_y(weapon.module_accessor) + 6.0;
     //let target_x = WorkModule::get_float(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLOAT_TARGET_X);
     //let target_y = WorkModule::get_float(weapon.module_accessor,*WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_FLOAT_TARGET_Y);
     let x_offset = (hold_num-1) as f32 * 1.0;
@@ -653,7 +715,7 @@ pub unsafe extern "C" fn pikmin_special_s_main(weapon: &mut L2CWeaponCommon) -> 
 
     //let target_id = WorkModule::get_int(owner, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_TARGET_ID) as u32;
     let target_id = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_CATCH_TARGET_BATTLE_OBJECT_ID) as u32;
-    if target_id != OBJECT_ID_NULL {
+    if target_id != OBJECT_ID_NULL && false {
         let target_boma = sv_battle_object::module_accessor(target_id);
         let hip_pos = &mut Vector3f{ x: 0.0, y: 0.0, z: 0.0 };
         ModelModule::joint_global_position(target_boma, Hash40::new("hip"), hip_pos, false);
@@ -666,10 +728,10 @@ pub unsafe extern "C" fn pikmin_special_s_main(weapon: &mut L2CWeaponCommon) -> 
     let mut direction_full = Vector2f{x:target_x-pos.x, y: (target_y-pos.y)};
     let direction_len = sv_math::vec2_length(direction_full.x,direction_full.y);
     let direction = Vector2f{x:direction_full.x/direction_len,y:direction_full.y/direction_len};
-    let speed = (direction_len*0.1).clamp(1.0, 4.0);
+    let speed = (direction_len*0.1).clamp(3.0, 5.0);
 
     let speed_x = direction.x*speed;
-    let speed_y = (direction.y*speed).max(1.0);
+    let speed_y = (direction.y*speed);//.max(1.0);
 
 
     println!("{variation_as_str} Pikmin (#{hold_num}) Speed: {speed_x},{speed_y}");
@@ -785,17 +847,19 @@ pub unsafe extern "C" fn pikmin_throw_f_sp_loop(weapon: &mut L2CWeaponCommon) ->
     let should_end = olimar_done; //status_frame > 80;//MotionModule::is_end(weapon.module_accessor)
     if should_end
     && WorkModule::is_flag(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_STATUS_THROW_WORK_FLAG_MOTION_STARTED) {
-        println!("ENDED");
         weapon.change_status(WEAPON_PIKMIN_PIKMIN_STATUS_KIND_GROUND_FOLLOW.into(), false.into());
         return 1.into();
     }
 
-    if CatchModule::is_catch(weapon.module_accessor) {
+    if !sub {
+        if StopModule::is_hit(weapon.module_accessor) {
+            StopModule::end_stop(weapon.module_accessor);
+        }
         let capture_id = WorkModule::get_int(weapon.module_accessor, *WEAPON_PIKMIN_PIKMIN_INSTANCE_WORK_ID_INT_CATCH_TARGET_BATTLE_OBJECT_ID) as u32;
         if capture_id != OBJECT_ID_NULL {
             let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
             let mut clatter = ControlModule::get_clatter_time(capture_boma, 0);
-            //if !sub {println!("Clatter: {clatter}");}
+            //println!("Throw Clatter: {clatter}");
             if clatter <= 0.0 && !WorkModule::is_flag(weapon.module_accessor, WEAPON_PIKMIN_PIKMIN_STATUS_THROW_WORK_FLAG_DISABLE_CLATTER) {
                 let new_status = if !sub {WEAPON_PIKMIN_PIKMIN_STATUS_KIND_CATCH_CUT} else {WEAPON_PIKMIN_PIKMIN_STATUS_KIND_CATCH_CUT_SUB};
                 weapon.change_status(new_status.into(),false.into());
@@ -804,12 +868,6 @@ pub unsafe extern "C" fn pikmin_throw_f_sp_loop(weapon: &mut L2CWeaponCommon) ->
                 WorkModule::on_flag(owner, *FIGHTER_PIKMIN_INSTANCE_WORK_ID_FLAG_CATCH_CUT);
             }
         }
-    }
-    else if !sub {
-        if StopModule::is_hit(weapon.module_accessor) {
-            StopModule::end_stop(weapon.module_accessor);
-        }
-        //println!("Thrown");
     }
 
     0.into()
@@ -896,6 +954,7 @@ pub fn install() {
         .acmd("sound_catchspecial", sound_catchspecial,Priority::Default)
         .acmd("expression_catchspecial", expression_catchspecial,Priority::Default)
         .status(Main, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_uniq)
+        .status(Exit, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_exit)
         .status(Init, *FIGHTER_STATUS_KIND_THROW, throw_init)
         .status(Exit, *FIGHTER_STATUS_KIND_THROW, throw_exit)
         .status(Main, *FIGHTER_STATUS_KIND_THROW, throw_main)

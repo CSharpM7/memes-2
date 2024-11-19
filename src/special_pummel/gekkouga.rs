@@ -15,8 +15,8 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
         JostleModule::set_status(agent.module_accessor, false);
         macros::WHOLE_HIT(agent, *HIT_STATUS_XLU);
-        let capture_id = WorkModule::get_int64(agent.module_accessor,FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID) as u64;
-        if capture_id != OBJECT_ID_NULL as u64{
+        let capture_id = WorkModule::get_int64(agent.module_accessor,FIGHTER_METAKNIGHT_INSTANCE_WORK_ID_INT_SPECIAL_PUMMEL_ID) as u32;
+        if capture_id != OBJECT_ID_NULL {
             let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
             HitModule::set_status_all(capture_boma,HitStatus(*HIT_STATUS_INVINCIBLE),0);
         }
