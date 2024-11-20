@@ -10,7 +10,9 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     let damage = 6.0;
     let angle: u64 = 45;
     let kbg = 60;
-    let bkb = 30;
+    let bkb = 35;
+    let mut target = *OBJECT_ID_NULL as i64;
+    let clatter_factor = 0.75;
     if macros::is_excute(agent) {
         macros::ATTACK_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_THROW, 0, damage, angle, kbg, 0, bkb, 0.0, 1.0, *ATTACK_LR_CHECK_F, 0.0, true, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_NONE, *ATTACK_REGION_THROW);
         macros::ATTACK_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_CATCH, 0, 3.0, 361, 100, 0, 40, 0.0, 1.0, *ATTACK_LR_CHECK_F, 0.0, true, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_PUNCH, *ATTACK_REGION_THROW);
@@ -37,10 +39,11 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {      
         macros::ATTACK_IGNORE_THROW(agent, 2, 0, Hash40::new("top"), damage, angle, kbg, 0, bkb, 5.0, 0.0, 6.5, 10.0, None, None, None, 1.0, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 0, false, false, false, false, true, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_ice"), *ATTACK_SOUND_LEVEL_M, *COLLISION_SOUND_ATTR_PUNCH, *ATTACK_REGION_HAMMER);
+        AttackModule::set_ice_frame_mul(agent.module_accessor, 2, clatter_factor, false);
     }
     //wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
-        let target = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_OBJECT);
+        target = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_OBJECT);
         let target_group = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_HIT_GROUP);
         let target_no = WorkModule::get_int64(agent.module_accessor, *FIGHTER_STATUS_THROW_WORK_INT_TARGET_HIT_NO);
         macros::ATK_HIT_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_THROW, Hash40::new("throw"), target, target_group, target_no);
@@ -48,6 +51,13 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
         AttackModule::clear_all(agent.module_accessor);
+        
+        let opponent_id = target as u32;
+        if opponent_id != OBJECT_ID_NULL {
+            let opponent = sv_battle_object::module_accessor(opponent_id);
+            let mut clatter = ControlModule::get_clatter_time(opponent, 0);
+            ControlModule::set_clatter_time(opponent, (clatter*clatter_factor),0);
+        }
     }
 }
 
