@@ -35,7 +35,7 @@ use smashline::*;
 //mod metroid_crawl;
 //mod hero_skill;
 //mod burst;
-mod special_pummel;
+//mod special_pummel;
 mod pikmin_charge;
 
 mod imports;
@@ -52,8 +52,7 @@ pub fn smashline_uninstall() {
 
 pub fn install() {
     println!("Loading memes");
-    crate::special_pummel::install();
-    //crate::pikmin_charge::install();
+    crate::pikmin_charge::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
