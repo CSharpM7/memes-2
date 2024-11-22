@@ -14,7 +14,7 @@ pub const FIGHTER_GAOGAEN_STATUS_CATCH_FLAG_REVENGE: i32 = 0x2100000E;
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 7.0);
     if macros::is_excute(agent) {
-        WorkModule::on_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
+        WorkModule::on_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CUT);
     }
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
@@ -23,7 +23,7 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     }
     wait(agent.lua_state_agent, 1.0);
     if macros::is_excute(agent) {
-        WorkModule::off_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
+        WorkModule::off_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CUT);
     }
 }
 

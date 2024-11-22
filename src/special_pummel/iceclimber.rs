@@ -11,7 +11,7 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     let angle: u64 = 45;
     let kbg = 60;
     let bkb = 35;
-    let mut target = *OBJECT_ID_NULL as i64;
+    let mut target = OBJECT_ID_NULL as u64;
     let clatter_factor = 0.75;
     if macros::is_excute(agent) {
         macros::ATTACK_ABS(agent, *FIGHTER_ATTACK_ABSOLUTE_KIND_THROW, 0, damage, angle, kbg, 0, bkb, 0.0, 1.0, *ATTACK_LR_CHECK_F, 0.0, true, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_NONE, *ATTACK_REGION_THROW);
@@ -180,6 +180,17 @@ unsafe extern "C" fn expression_catchspecial_nana(agent: &mut L2CAgentBase) {
 /*
 STATUS
 */
+pub unsafe fn is_nana_alive(fighter: &mut L2CFighterCommon) -> bool {
+    let mut bVar2 = true;
+    fighter.clear_lua_stack();
+    lua_args!(fighter, Hash40::new_raw(0x253ce36631));
+    sv_battle_object::notify_event_msc_cmd(fighter.lua_state_agent);
+    bVar2 = fighter.pop_lua_stack(1).get_bool();
+    if !bVar2 {
+        //println!("A: Partner dead"); 
+        return false;}
+    return true;
+}
 pub unsafe fn is_nana_near(fighter: &mut L2CFighterCommon) -> bool {
     let dist = WorkModule::get_param_float(fighter.module_accessor, hash40("param_special_s"), hash40("couple_distance"))*1.5;
     fighter.clear_lua_stack();
@@ -195,12 +206,9 @@ pub unsafe fn is_nana_near(fighter: &mut L2CFighterCommon) -> bool {
 
 pub unsafe fn is_nana_available(fighter: &mut L2CFighterCommon) -> bool {
     let mut bVar2 = true;
-    fighter.clear_lua_stack();
-    lua_args!(fighter, Hash40::new_raw(0x253ce36631));
-    sv_battle_object::notify_event_msc_cmd(fighter.lua_state_agent);
-    bVar2 = fighter.pop_lua_stack(1).get_bool();
+    bVar2 = is_nana_alive(fighter);
     if !bVar2 {
-        println!("A: Partner dead"); 
+        //println!("A: Partner dead"); 
         return false;}
 
     fighter.clear_lua_stack();
@@ -208,12 +216,12 @@ pub unsafe fn is_nana_available(fighter: &mut L2CFighterCommon) -> bool {
     sv_battle_object::notify_event_msc_cmd(fighter.lua_state_agent);
     bVar2 = fighter.pop_lua_stack(1).get_bool();
     if !bVar2 {
-        println!("B: Partner unreachable?"); 
+        //println!("B: Partner unreachable?"); 
         return false;}
 
-    bVar2 = is_nana_near(fighter);
+    bVar2 = is_nana_alive(fighter);
     if !bVar2 {
-        println!("C: Partner too far?"); 
+        //println!("C: Partner too far?"); 
     return false;}
     
     return true;
@@ -310,7 +318,7 @@ unsafe extern "C" fn throw_sp_main_loop(fighter: &mut L2CFighterCommon) -> L2CVa
                 AttackModule::clear_all(fighter.module_accessor);
                 fighter.change_status(FIGHTER_STATUS_KIND_CATCH_CUT.into(),false.into());
                 StatusModule::change_status_request(opponent, *FIGHTER_STATUS_KIND_CAPTURE_JUMP, false);
-                if is_nana_near(fighter) {
+                if is_nana_alive(fighter) {
                     let partner_id = LinkModule::get_node_object_id(fighter.module_accessor, *FIGHTER_POPO_LINK_NO_PARTNER) as u32;
                     let partner_boma = sv_battle_object::module_accessor(partner_id);
                     if StatusModule::status_kind(partner_boma) == *FIGHTER_STATUS_KIND_THROW {

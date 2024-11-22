@@ -7,11 +7,13 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 11.0);
     FT_MOTION_RATE_RANGE(agent, 11.0, 67.0, 27.0);
     if macros::is_excute(agent) {
+        WorkModule::on_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CUT);
         macros::ATTACK(agent, 0, 0, Hash40::new("top"), 2.1, 361, 100, 30, 0, 7.0, 0.0, 10.0, 11.0, None, None, None, 0.5, 1.0, *ATTACK_SETOFF_KIND_OFF, *ATTACK_LR_CHECK_F, false, 0, 0.0, 6, false, false, false, true, false, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_fire"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_FIRE, *ATTACK_REGION_NONE);
         AttackModule::set_catch_only_all(agent.module_accessor, true, false);
     }
     frame(agent.lua_state_agent, 62.0);
     if macros::is_excute(agent) {
+        WorkModule::off_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CUT);
         AttackModule::clear_all(agent.module_accessor);
     }
     frame(agent.lua_state_agent, 67.0);
@@ -61,28 +63,9 @@ unsafe extern "C" fn expression_catchspecial(agent: &mut L2CAgentBase) {
     }
 }
 
-pub unsafe extern "C" fn catch_attack_init_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let interval = WorkModule::get_param_int(fighter.module_accessor, hash40("param_special_n"), hash40("gene_interval"));
-    WorkModule::set_int(fighter.module_accessor, 0, *FIGHTER_KOOPA_STATUS_BREATH_WORK_INT_GENERATE_COUNT);
-    0.into()
-}
-pub unsafe extern "C" fn catch_attack_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
-    if WorkModule::is_flag(fighter.module_accessor,FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL) {
-        HitModule::set_hit_stop_mul(fighter.module_accessor, 0.25, HitStopMulTarget{_address: *HIT_STOP_MUL_TARGET_ALL as u8}, 0.0);
-        ShakeModule::stop(fighter.module_accessor);
-        if WorkModule::is_flag(fighter.module_accessor,*FIGHTER_KOOPA_STATUS_BREATH_FLAG_GENE_BREATH)  {
-            WorkModule::set_float(fighter.module_accessor, 0.0, *FIGHTER_KOOPA_STATUS_BREATH_WORK_FLOAT_GENE_ANGLE);
-            WorkModule::dec_int(fighter.module_accessor, *FIGHTER_KOOPA_STATUS_BREATH_WORK_INT_GENERATE_COUNT);
-            let count = WorkModule::get_int(fighter.module_accessor, *FIGHTER_KOOPA_STATUS_BREATH_WORK_INT_GENERATE_COUNT);
-            if count <= 0 {
-                let interval = WorkModule::get_param_int(fighter.module_accessor, hash40("param_special_n"), hash40("gene_interval"));
-                WorkModule::set_int(fighter.module_accessor, interval/2, *FIGHTER_KOOPA_STATUS_BREATH_WORK_INT_GENERATE_COUNT);
-                //ArticleModule::generate_article_enable(fighter.module_accessor, *FIGHTER_KOOPA_GENERATE_ARTICLE_BREATH, false, -1);
-                macros::EFFECT_FOLLOW(fighter, Hash40::new("koopa_breath"), Hash40::new("head"), -2, 5, 5, 180, 0, 50, 0.9, true);
-            }
-        }
-    }
-    0.into()
+pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let to_return = catch_attack_main_inner(fighter);
+    return to_return;
 }
 
 pub fn install() {
@@ -91,7 +74,5 @@ pub fn install() {
         .acmd("effect_catchspecial", effect_catchspecial,Priority::Default)
         .acmd("sound_catchspecial", sound_catchspecial,Priority::Default)
         .acmd("expression_catchspecial", expression_catchspecial,Priority::Default)
-        .status(Init, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_init_uniq)
-        .status(Exec, *FIGHTER_STATUS_KIND_CATCH_ATTACK, catch_attack_exec)
     .install();
 }

@@ -134,7 +134,7 @@ ACMD
  */
 unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 1.0); 
-    FT_MOTION_RATE_RANGE(agent, 1.0, 18.0, 30.0);
+    FT_MOTION_RATE_RANGE(agent, 1.0, 18.0, 16.0);
     frame(agent.lua_state_agent, 18.0); 
     FT_MOTION_RATE(agent,1.0);
     frame(agent.lua_state_agent, 20.0); 
@@ -147,7 +147,7 @@ unsafe extern "C" fn game_catchspecial(agent: &mut L2CAgentBase) {
     }
     frame(agent.lua_state_agent, 27.0); 
     if macros::is_excute(agent) {
-        WorkModule::on_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
+        WorkModule::on_flag(agent.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CUT);
     }
     frame(agent.lua_state_agent, 49.0);
     if macros::is_excute(agent) {
@@ -443,6 +443,9 @@ pub unsafe extern "C" fn catch_attack_init_variables(fighter: &mut L2CFighterCom
             let capture_boma = sv_battle_object::module_accessor(capture_id as u32);
             let target_pos = *PostureModule::pos(capture_boma);
             println!("Has target {capture_id} at {}",target_pos.x);
+
+            let mut clatter = ControlModule::get_clatter_time(capture_boma, 0);
+            ControlModule::set_clatter_time(capture_boma, clatter*0.5,0);
             
             WorkModule::set_int(fighter.module_accessor, capture_id as i32, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_TARGET_ID);
             if StatusModule::status_kind(fighter.module_accessor) == *FIGHTER_STATUS_KIND_THROW {
@@ -505,7 +508,7 @@ pub unsafe extern "C" fn catch_attack_uniq(fighter: &mut L2CFighterCommon) -> L2
 
 pub unsafe extern "C" fn catch_attack_loop_uniq(fighter: &mut L2CFighterCommon) -> L2CValue {
     let capture_id = WorkModule::get_int(fighter.module_accessor, FIGHTER_PIKMIN_INSTANCE_WORK_INT_CHARGE_TARGET_ID) as u32;
-    let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
+    let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CUT);
     if capture_id != OBJECT_ID_NULL {
         let opponent = sv_battle_object::module_accessor(capture_id as u32);
         WorkModule::off_flag(opponent,*FIGHTER_STATUS_CAPTURE_PULLED_WORK_FLAG_JUMP);

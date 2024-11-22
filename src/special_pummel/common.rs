@@ -5,7 +5,7 @@ pub const FIGHTER_INSTANCE_WORK_ID_FLAG_CATCH_SPECIAL: i32 = 0x20000116;
 pub const FIGHTER_INSTANCE_WORK_ID_FLAG_FORBID_CATCH_SPECIAL: i32 = 0x20000117;
 pub const FIGHTER_INSTANCE_CATCH_ATTACK_COUNT : i32 = 0x100000ED;
 
-pub const FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER: i32 = 0x2100000B;
+pub const FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CUT: i32 = 0x2100000B;
 pub const FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP: i32 = 0x1000007;
 
 pub const PUMMEL_PENALTY_COUNT_MIN: i32 = 0; //0 removes penalty (b). 99 makes it always max penalty (a)
@@ -189,8 +189,8 @@ pub unsafe extern "C" fn catch_special_main_loop(fighter: &mut L2CFighterCommon)
         WorkModule::off_flag(opponent,*FIGHTER_STATUS_CAPTURE_PULLED_WORK_FLAG_JUMP);
 
         let mut clatter = ControlModule::get_clatter_time(opponent, 0);
-        //println!("Clatter: {clatter}");
-        let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CLATTER);
+        let disable_clatter = WorkModule::is_flag(fighter.module_accessor, FIGHTER_STATUS_CATCH_ATTACK_FLAG_DISABLE_CUT);
+        //println!("Clatter: {clatter} ({disable_clatter})");
         if disable_clatter {
             //clatter = WorkModule::get_float(fighter.module_accessor,FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
             if clatter <= 1.0 {
@@ -200,6 +200,10 @@ pub unsafe extern "C" fn catch_special_main_loop(fighter: &mut L2CFighterCommon)
         }
         else {
             WorkModule::set_float(fighter.module_accessor, clatter, FIGHTER_STATUS_CATCH_ATTACK_WORK_FLOAT_CLATTER_OPP);
+            if clatter <= 1.0 {
+                ControlModule::end_clatter(opponent, 0);
+                //println!("Reset");
+            }
         }
     }
     return fighter.status_CatchAttack_Main();
@@ -278,7 +282,7 @@ fn nro_hook(info: &skyline::nro::NroInfo) {
     if info.name == "common" {
         #[cfg(not(feature = "dev"))]{
             println!("Install hooks");
-            skyline::install_hooks!(.
+            skyline::install_hooks!(
                 status_CatchAttack,
                     
                 attack_mtrans_pre_process, //HDR
