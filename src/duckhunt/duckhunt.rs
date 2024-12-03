@@ -95,16 +95,17 @@ pub unsafe extern "C" fn special_motion_helper(fighter: &mut L2CFighterCommon,in
     }
 }
 unsafe extern "C" fn specialn_main(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let should_use_original = !is_uniq_echo(fighter.module_accessor) || !ArticleModule::is_exist(module_accessor, *FIGHTER_DUCKHUNT_GENERATE_ARTICLE_CAN);
-    if should_use_original {
-        return smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SPECIAL_N)(fighter);
+    let ret_original = return smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SPECIAL_N)(fighter);
+    if !is_uniq_echo(fighter.module_accessor) { return ret_original;}
+    if !ArticleModule::is_exist(module_accessor, *FIGHTER_DUCKHUNT_GENERATE_ARTICLE_CAN) {
+        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_N);
+        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_S);
+        return ret_original;
     }
     WorkModule::set_int64(fighter.module_accessor, hash40("special_n_blank") as i64, *FIGHTER_STATUS_WORK_ID_UTILITY_WORK_INT_MOT_KIND);
     WorkModule::set_int64(fighter.module_accessor, hash40("special_air_n_blank") as i64, *FIGHTER_STATUS_WORK_ID_UTILITY_WORK_INT_MOT_AIR_KIND);
     special_motion_helper(fighter,true);
     
-    fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_GROUND_STOP.into(),FIGHTER_KINETIC_TYPE_AIR_STOP.into());
-    fighter.sub_set_ground_correct_by_situation(true.into());
     return fighter.sub_shift_status_main(L2CValue::Ptr(specialn_main_loop as *const () as _));
 }
 
@@ -130,16 +131,17 @@ unsafe extern "C" fn specialn_main_loop(fighter: &mut L2CFighterCommon) -> L2CVa
 } 
 
 unsafe extern "C" fn specials_main(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let should_use_original = !is_uniq_echo(fighter.module_accessor) || !ArticleModule::is_exist(module_accessor, *FIGHTER_DUCKHUNT_GENERATE_ARTICLE_CLAY);
-    if should_use_original {
-        return smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SPECIAL_N)(fighter);
+    let ret_original = return smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SPECIAL_S)(fighter);
+    if !is_uniq_echo(fighter.module_accessor) { return ret_original;}
+    if !ArticleModule::is_exist(module_accessor, *FIGHTER_DUCKHUNT_GENERATE_ARTICLE_CLAY) {
+        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_N);
+        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_S);
+        return ret_original;
     }
     WorkModule::set_int64(fighter.module_accessor, hash40("special_s_blank") as i64, *FIGHTER_STATUS_WORK_ID_UTILITY_WORK_INT_MOT_KIND);
     WorkModule::set_int64(fighter.module_accessor, hash40("special_air_s_blank") as i64, *FIGHTER_STATUS_WORK_ID_UTILITY_WORK_INT_MOT_AIR_KIND);
     special_motion_helper(fighter,true);
     
-    fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_GROUND_STOP.into(),FIGHTER_KINETIC_TYPE_AIR_STOP.into());
-    fighter.sub_set_ground_correct_by_situation(true.into());
     return fighter.sub_shift_status_main(L2CValue::Ptr(specialn_main_loop as *const () as _));
 }
 unsafe extern "C" fn shoot_main(weapon: &mut L2CWeaponCommon) -> L2CValue {
@@ -179,7 +181,7 @@ pub fn install() {
         
         .status(Main, *FIGHTER_STATUS_KIND_SPECIAL_N, specialn_main)
         .status(Main, *FIGHTER_STATUS_KIND_SPECIAL_S, specials_main)
-        .on_line(Main, fighter_update)
+        //.on_line(Main, fighter_update)
     .install();
     Agent::new("duckhunt_gunman")
         .status(Main, *WEAPON_DUCKHUNT_GUNMAN_STATUS_KIND_SHOOT, shoot_main)
