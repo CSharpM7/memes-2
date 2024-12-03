@@ -35,8 +35,8 @@ use smashline::*;
 //mod metroid_crawl;
 //mod hero_skill;
 //mod burst;
-//mod special_pummel;
-mod pikmin_charge;
+//mod pikmin_charge;
+mod duckhunt;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -52,7 +52,7 @@ pub fn smashline_uninstall() {
 
 pub fn install() {
     println!("Loading memes");
-    crate::pikmin_charge::install();
+    crate::duckhunt::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
@@ -63,6 +63,7 @@ pub fn main() {
     #[cfg(feature = "devhook")]
     println!("Devhook Loading memes");
 
+    crate::duckhunt::install();
 
     #[cfg(not(feature = "dev"))]
     install();

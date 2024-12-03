@@ -1,4 +1,5 @@
 use crate::imports::imports_status::*;
+use crate::imports::imports_acmd::*;
 
 pub unsafe extern "C" fn pik_deny_follow(weapon: &mut L2CWeaponCommon) -> bool {
     let prev_status = weapon.global_table[PREV_STATUS_KIND].get_i32();
@@ -34,10 +35,6 @@ pub unsafe extern "C" fn pik_ground_follow_pre(weapon: &mut L2CWeaponCommon) -> 
     }
     return smashline::original_status(Pre, weapon, *WEAPON_PIKMIN_PIKMIN_STATUS_KIND_GROUND_FOLLOW)(weapon);
 }
-
-use crate::imports::imports_acmd::*;
-use crate::imports::imports_status::*;
-use crate::special_pummel::imports::*;
 
 extern "C" {
     #[link_name = "\u{1}_ZN3app44FighterPikminLinkEventWeaponPikminConstraint13new_l2c_tableEv"]
