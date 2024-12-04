@@ -84,7 +84,6 @@ pub unsafe extern "C" fn duckhunt_per_frame(vtable: u64, fighter: &mut Fighter) 
 
     //
     //Countdown
-    */
     let countdown = WorkModule::get_int(module_accessor, *FIGHTER_DUCKHUNT_INSTANCE_WORK_ID_INT_SPECIAL_S_DISABLE_SHOOT_CAN_FRAME);
     if -1 < countdown {
 	    if !has_clay {
@@ -96,7 +95,7 @@ pub unsafe extern "C" fn duckhunt_per_frame(vtable: u64, fighter: &mut Fighter) 
 		}
 	    }
     }
-	if  (status - 0x1e0 < 0xb) && ((status - 0x1e0 & 0x1f) & 0x7f1U) != 0)) {
+	if  ((status - 0x1e0 < 0xb) && ((status - 0x1e0 & 0x1f) & 0x7f1U) != 0) {
 	}
 }
 

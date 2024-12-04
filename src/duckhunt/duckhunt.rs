@@ -6,13 +6,15 @@ HELPER
 */
 pub unsafe fn is_uniq_echo(boma: *mut BattleObjectModuleAccessor) -> bool
 {
-    #[cfg(feature = "dev")]
-    return true;
     
     let entry_id = sv_battle_object::entry_id((*boma).battle_object_id) as u32;
     let info = app::lua_bind::FighterManager::get_fighter_information(singletons::FighterManager(), app::FighterEntryID(entry_id as i32));
     let color = app::lua_bind::FighterInformation::fighter_color(info) as i32;
-    let modded = [120..=127].contains(&color);
+
+    #[cfg(feature = "dev")]
+    return color == 0;
+
+    let modded = (120..=127).contains(&color);
     return modded;
 }
 /*
@@ -23,7 +25,7 @@ unsafe extern "C" fn game_specialnblank(agent: &mut L2CAgentBase) {
 unsafe extern "C" fn effect_specialnblank(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 13.0);
     if macros::is_excute(agent) {
-        macros::EFFECT(agent, Hash40::new("sys_erace_smoke"), Hash40::new("top"), 0, 0, -7, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
+        macros::EFFECT(agent, Hash40::new("sys_erace_smoke"), Hash40::new("top"), 0, 4, 8, 0, 0, 0, 0.9, 0, 0, 0, 0, 0, 0, true);
     }
 }
 unsafe extern "C" fn expression_specialnblank(agent: &mut L2CAgentBase) {
@@ -46,7 +48,7 @@ unsafe extern "C" fn game_specialsblank(agent: &mut L2CAgentBase) {
 unsafe extern "C" fn effect_specialsblank(agent: &mut L2CAgentBase) {
     frame(agent.lua_state_agent, 12.0);
     if macros::is_excute(agent) {
-        macros::EFFECT(agent, Hash40::new("sys_erace_smoke"), Hash40::new("top"), 0, 0, -7, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, true);
+        macros::EFFECT(agent, Hash40::new("sys_erace_smoke"), Hash40::new("throw"), 0, 6, 12, 0, 0, 0, 0.9, 0, 0, 0, 0, 0, 0, true);
     }
 }
 unsafe extern "C" fn expression_specialsblank(agent: &mut L2CAgentBase) {
@@ -77,7 +79,7 @@ unsafe fn force_enable_specials(module_accessor: &mut BattleObjectModuleAccessor
 }
 pub unsafe extern "C" fn fighter_update(fighter: &mut L2CFighterCommon) {
     let module_accessor= fighter.module_accessor;
-    force_enable_specials(module_accessor);
+    force_enable_specials(&mut *module_accessor);
 }
 /*
 STATUS
@@ -95,16 +97,21 @@ pub unsafe extern "C" fn special_motion_helper(fighter: &mut L2CFighterCommon,in
     }
 }
 unsafe extern "C" fn specialn_main(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let ret_original = return smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SPECIAL_N)(fighter);
-    if !is_uniq_echo(fighter.module_accessor) { return ret_original;}
-    if !ArticleModule::is_exist(module_accessor, *FIGHTER_DUCKHUNT_GENERATE_ARTICLE_CAN) {
-        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_N);
-        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_S);
-        return ret_original;
+    let should_return_original = !is_uniq_echo(fighter.module_accessor) || !ArticleModule::is_exist(fighter.module_accessor, *FIGHTER_DUCKHUNT_GENERATE_ARTICLE_CAN);
+    if should_return_original {
+        let to_return = smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SPECIAL_N)(fighter);
+        if is_uniq_echo(fighter.module_accessor) {
+            WorkModule::unable_transition_term_forbid(fighter.module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_N);
+            WorkModule::unable_transition_term_forbid(fighter.module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_S);
+        }
+        return to_return;
     }
+
     WorkModule::set_int64(fighter.module_accessor, hash40("special_n_blank") as i64, *FIGHTER_STATUS_WORK_ID_UTILITY_WORK_INT_MOT_KIND);
     WorkModule::set_int64(fighter.module_accessor, hash40("special_air_n_blank") as i64, *FIGHTER_STATUS_WORK_ID_UTILITY_WORK_INT_MOT_AIR_KIND);
     special_motion_helper(fighter,true);
+    fighter.sub_set_ground_correct_by_situation(false.into());
+    fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_GROUND_STOP.into(),FIGHTER_KINETIC_TYPE_AIR_STOP.into());
     
     return fighter.sub_shift_status_main(L2CValue::Ptr(specialn_main_loop as *const () as _));
 }
@@ -131,22 +138,28 @@ unsafe extern "C" fn specialn_main_loop(fighter: &mut L2CFighterCommon) -> L2CVa
 } 
 
 unsafe extern "C" fn specials_main(fighter: &mut L2CFighterCommon) -> L2CValue {
-    let ret_original = return smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SPECIAL_S)(fighter);
-    if !is_uniq_echo(fighter.module_accessor) { return ret_original;}
-    if !ArticleModule::is_exist(module_accessor, *FIGHTER_DUCKHUNT_GENERATE_ARTICLE_CLAY) {
-        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_N);
-        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_S);
-        return ret_original;
+    let should_return_original = !is_uniq_echo(fighter.module_accessor) || !ArticleModule::is_exist(fighter.module_accessor, *FIGHTER_DUCKHUNT_GENERATE_ARTICLE_CLAY);
+    if should_return_original {
+        let to_return = smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SPECIAL_S)(fighter);
+        if is_uniq_echo(fighter.module_accessor) {
+            WorkModule::unable_transition_term_forbid(fighter.module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_N);
+            WorkModule::unable_transition_term_forbid(fighter.module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_S);
+        }
+        return to_return;
     }
+
     WorkModule::set_int64(fighter.module_accessor, hash40("special_s_blank") as i64, *FIGHTER_STATUS_WORK_ID_UTILITY_WORK_INT_MOT_KIND);
     WorkModule::set_int64(fighter.module_accessor, hash40("special_air_s_blank") as i64, *FIGHTER_STATUS_WORK_ID_UTILITY_WORK_INT_MOT_AIR_KIND);
     special_motion_helper(fighter,true);
+
+    fighter.sub_set_ground_correct_by_situation(false.into());
+    fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_GROUND_STOP.into(),FIGHTER_KINETIC_TYPE_AIR_STOP.into());
     
     return fighter.sub_shift_status_main(L2CValue::Ptr(specialn_main_loop as *const () as _));
 }
 unsafe extern "C" fn shoot_main(weapon: &mut L2CWeaponCommon) -> L2CValue {
-        let owner_id = WorkModule::get_int(weapon.module_accessor, *WEAPON_INSTANCE_WORK_ID_INT_ACTIVATE_FOUNDER_ID) as u32;
-        let owner = smash::app::sv_battle_object::module_accessor(owner_id);
+    let owner_id = WorkModule::get_int(weapon.module_accessor, *WEAPON_INSTANCE_WORK_ID_INT_ACTIVATE_FOUNDER_ID) as u32;
+    let owner = smash::app::sv_battle_object::module_accessor(owner_id);
     let ret_original = smashline::original_status(Main, weapon, *WEAPON_DUCKHUNT_GUNMAN_STATUS_KIND_SHOOT)(weapon);
     let should_use_original = !is_uniq_echo(owner);
     if should_use_original {
@@ -161,23 +174,23 @@ unsafe extern "C" fn shoot_main(weapon: &mut L2CWeaponCommon) -> L2CValue {
 }
 pub fn install() {   
     Agent::new("duckhunt")
-        .game_acmd("game_specialsblank", game_specialsblank)
-        .game_acmd("game_specialairsblank", game_specialsblank)
-        .sound_acmd("sound_specialsblank", acmd_stub)
-        .sound_acmd("sound_specialairsblank", acmd_stub)
-        .effect_acmd("effect_specialsblank", effect_specialsblank)
-        .effect_acmd("effect_specialairsblank", effect_specialsblank)
-        .expression_acmd("expression_specialsblank", expression_specialsblank)
-        .expression_acmd("expression_specialairsblank", expression_specialsblank)
+        .acmd("game_specialnblank", game_specialnblank, Priority::Default)
+        .acmd("game_specialairnblank", game_specialnblank, Priority::Default)
+        .acmd("sound_specialnblank", acmd_stub, Priority::Default)
+        .acmd("sound_specialairnblank", acmd_stub, Priority::Default)
+        .acmd("effect_specialnblank", effect_specialnblank, Priority::Default)
+        .acmd("effect_specialairnblank", effect_specialnblank, Priority::Default)
+        .acmd("expression_specialnblank", expression_specialnblank, Priority::Default)
+        .acmd("expression_specialairnblank", expression_specialnblank, Priority::Default)
         
-        .game_acmd("game_specialsblank", game_specialsblank)
-        .game_acmd("game_specialairsblank", game_specialsblank)
-        .sound_acmd("sound_specialsblank", acmd_stub)
-        .sound_acmd("sound_specialairsblank", acmd_stub)
-        .effect_acmd("effect_specialsblank", effect_specialsblank)
-        .effect_acmd("effect_specialairsblank", effect_specialsblank)
-        .expression_acmd("expression_specialsblank", expression_specialsblank)
-        .expression_acmd("expression_specialairsblank", expression_specialsblank)
+        .acmd("game_specialsblank", game_specialsblank, Priority::Default)
+        .acmd("game_specialairsblank", game_specialsblank, Priority::Default)
+        .acmd("sound_specialsblank", acmd_stub, Priority::Default)
+        .acmd("sound_specialairsblank", acmd_stub, Priority::Default)
+        .acmd("effect_specialsblank", effect_specialsblank, Priority::Default)
+        .acmd("effect_specialairsblank", effect_specialsblank, Priority::Default)
+        .acmd("expression_specialsblank", expression_specialsblank, Priority::Default)
+        .acmd("expression_specialairsblank", expression_specialsblank, Priority::Default)
         
         .status(Main, *FIGHTER_STATUS_KIND_SPECIAL_N, specialn_main)
         .status(Main, *FIGHTER_STATUS_KIND_SPECIAL_S, specials_main)

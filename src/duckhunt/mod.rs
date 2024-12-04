@@ -1,9 +1,9 @@
 mod duckhunt;
-mod vtable;
+//mod vtable;
 
 pub fn install() {
     #[cfg(feature = "devhook")]{
-        vtable::install();
+        //vtable::install();
         return;
     }
 
