@@ -67,21 +67,6 @@ unsafe extern "C" fn expression_specialsblank(agent: &mut L2CAgentBase) {
     }
 }
 /*
-FRAME
-*/
-unsafe fn force_enable_specials(module_accessor: &mut BattleObjectModuleAccessor) {
-    let has_final = WorkModule::is_flag(module_accessor, *FIGHTER_INSTANCE_WORK_ID_FLAG_FINAL) &&
-    WorkModule::is_flag(module_accessor, *FIGHTER_INSTANCE_WORK_ID_FLAG_ONE_MORE_FINAL_DEAD_FAILED);
-    if !has_final {
-        WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_N);
-    }
-    WorkModule::unable_transition_term_forbid(module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_SPECIAL_S);
-}
-pub unsafe extern "C" fn fighter_update(fighter: &mut L2CFighterCommon) {
-    let module_accessor= fighter.module_accessor;
-    force_enable_specials(&mut *module_accessor);
-}
-/*
 STATUS
 */
 pub unsafe extern "C" fn special_motion_helper(fighter: &mut L2CFighterCommon,init: bool) {
@@ -194,7 +179,6 @@ pub fn install() {
         
         .status(Main, *FIGHTER_STATUS_KIND_SPECIAL_N, specialn_main)
         .status(Main, *FIGHTER_STATUS_KIND_SPECIAL_S, specials_main)
-        //.on_line(Main, fighter_update)
     .install();
     Agent::new("duckhunt_gunman")
         .status(Main, *WEAPON_DUCKHUNT_GUNMAN_STATUS_KIND_SHOOT, shoot_main)
