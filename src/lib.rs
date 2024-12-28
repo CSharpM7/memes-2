@@ -36,7 +36,7 @@ use smashline::*;
 //mod hero_skill;
 //mod burst;
 //mod pikmin_charge;
-mod duckhunt;
+mod swordie_wave;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -50,9 +50,12 @@ pub fn smashline_uninstall() {
     uninstall();
 }
 
+pub fn install_hook() {
+    crate::swordie_wave::install_hook();
+}
 pub fn install() {
-    println!("Loading memes");
-    crate::duckhunt::install();
+    println!("[smashline_memes2] Loading memes");
+    crate::swordie_wave::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
@@ -61,9 +64,13 @@ pub fn uninstall() {
 #[skyline::main(name = "smashline2_memes")]
 pub fn main() {
     #[cfg(feature = "devhook")]
-    println!("Devhook Loading memes");
+    println!("[smashline_memes2] Devhook Loading memes");
 
-    crate::duckhunt::install();
+    #[cfg(not(feature = "dev"))]
+    install_hook();
+	
+    #[cfg(feature = "devhook")]
+	return;
 
     #[cfg(not(feature = "dev"))]
     install();
