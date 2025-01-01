@@ -3,7 +3,7 @@ use crate::imports::imports_agent::*;
 
 /*
 ACMD
- */
+*/
 unsafe extern "C" fn game_fly(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
         macros::ATTACK(agent, 0, 0, Hash40::new("top"), 5.0, 361, 20, 0, 35, 3.0, 0.0, 0.0, 0.0, None, None, None, 0.6, 1.0, *ATTACK_SETOFF_KIND_ON, *ATTACK_LR_CHECK_SPEED, false, -2.5, 0.0, 0, true, true, false, false, false, *COLLISION_SITUATION_MASK_GA, *COLLISION_CATEGORY_MASK_ALL, *COLLISION_PART_MASK_ALL, false, Hash40::new("collision_attr_normal"), *ATTACK_SOUND_LEVEL_S, *COLLISION_SOUND_ATTR_KICK, *ATTACK_REGION_NONE);
@@ -29,7 +29,6 @@ STATUS
 */
 
 const STATUS_KIND_FLY : i32 = 0x0;
-
 const MOVE_SPEED : f32 = 0.5;
 const LIFE : i32 = 90;
 
@@ -53,32 +52,32 @@ pub unsafe extern "C" fn fly_pre(weapon: &mut L2CWeaponCommon) -> L2CValue {
 pub unsafe extern "C" fn fly_init(weapon: &mut L2CWeaponCommon) -> L2CValue {
     let owner = WorkModule::get_int(weapon.module_accessor, *WEAPON_INSTANCE_WORK_ID_INT_LINK_OWNER) as u32;
     let owner_boma = sv_battle_object::module_accessor(owner);
-	let lr = PostureModule::lr(owner_boma);
-	
-	/*
-	SNAP TO BONE
-	*/
-	let owner_bone = Hash40::new("haver");
+    let lr = PostureModule::lr(owner_boma);
+    
+    /*
+    SNAP TO BONE
+    */
+    let owner_bone = Hash40::new("haver");
     let mut offset = Vector3f{x:0.0,y:0.0,z:0.0};
-	
+    
     let mut owner_bone_pos = Vector3f{x:0.0,y:0.0,z:0.0};
     let owner_offset = ModelModule::joint_global_offset_from_top(owner_boma, owner_bone, &mut owner_bone_pos);
     let newPos = Vector3f{
-		x: PostureModule::pos_x(owner_boma) + owner_bone_pos.x + (offset.x*lr), 
-		y: PostureModule::pos_y(owner_boma) + owner_bone_pos.y + offset.y, 
-		z: PostureModule::pos_z(owner_boma) + owner_bone_pos.z
-	};
-    PostureModule::set_pos(weapon.module_accessor, &newPos);
+        x: PostureModule::pos_x(owner_boma) + owner_bone_pos.x + (offset.x*lr), 
+        y: PostureModule::pos_y(owner_boma) + owner_bone_pos.y + offset.y, 
+        z: GroundModule::get_z(weapon.module_accessor)
+    };
+    PostureModule::set_pos(weapon.module_accessor, &newPos); 
 
-	/*
-	SET LR
-	*/
-	PostureModule::set_lr(weapon.module_accessor, lr);
+    /*
+    SET LR
+    */
+    PostureModule::set_lr(weapon.module_accessor, lr);
     PostureModule::update_rot_y_lr(weapon.module_accessor);
 
-	/*
-	SET SPEED
-	*/
+    /*
+    SET SPEED
+    */
     let move_speed = MOVE_SPEED;
     let speed_x = move_speed;
     sv_kinetic_energy!(
@@ -104,24 +103,24 @@ pub unsafe extern "C" fn fly_main(weapon: &mut smashline::L2CWeaponCommon) -> L2
 }
 
 unsafe extern "C" fn fly_main_status_loop(weapon: &mut smashline::L2CWeaponCommon) -> smashline::L2CValue {
-	//Die on attack collision
-	if !AttackModule::is_attack(weapon.module_accessor, 0, false) 
-	|| AttackModule::is_infliction(weapon.module_accessor,*COLLISION_KIND_MASK_HIT){
-		smash_script::notify_event_msc_cmd!(weapon, Hash40::new_raw(0x199c462b5d));
-		return 0.into();
-	}
-	//Die on wall hit
-	if GroundModule::is_touch(weapon.module_accessor, (*GROUND_TOUCH_FLAG_LEFT | *GROUND_TOUCH_FLAG_RIGHT) as u32) {
-		WorkModule::set_int(weapon.module_accessor, 0, *WEAPON_INSTANCE_WORK_ID_INT_LIFE);
-	}
+    //Die on attack collision
+    if !AttackModule::is_attack(weapon.module_accessor, 0, false) 
+    || AttackModule::is_infliction(weapon.module_accessor,*COLLISION_KIND_MASK_HIT){
+        smash_script::notify_event_msc_cmd!(weapon, Hash40::new_raw(0x199c462b5d));
+        return 0.into();
+    }
+    //Die on wall hit
+    if GroundModule::is_touch(weapon.module_accessor, (*GROUND_TOUCH_FLAG_LEFT | *GROUND_TOUCH_FLAG_RIGHT) as u32) {
+        WorkModule::set_int(weapon.module_accessor, 0, *WEAPON_INSTANCE_WORK_ID_INT_LIFE);
+    }
     if WorkModule::count_down_int(weapon.module_accessor, *WEAPON_INSTANCE_WORK_ID_INT_LIFE, 0) {
         let eff_pos = *PostureModule::pos(weapon.module_accessor);
         EffectModule::req(weapon.module_accessor, Hash40::new("sys_erace_smoke"), 
-		&Vector3f{x: eff_pos.x, y: eff_pos.y+0.0, z: eff_pos.z}, &Vector3f{x: 0.0, y: 300.0, z: 0.0}, 
-		1.0, 0,-1,false,0) as u32;
+        &Vector3f{x: eff_pos.x, y: eff_pos.y+0.0, z: eff_pos.z}, &Vector3f{x: 0.0, y: 300.0, z: 0.0}, 
+        1.0, 0,-1,false,0) as u32;
         
         smash_script::notify_event_msc_cmd!(weapon, Hash40::new_raw(0x199c462b5d));
-		return 0.into();
+        return 0.into();
     }
 
     0.into()
@@ -136,11 +135,11 @@ pub fn install() {
     agent.acmd("game_fly", game_fly,Priority::Low);
     agent.acmd("effect_fly", effect_fly,Priority::Low);
     agent.acmd("sound_fly", sound_fly,Priority::Low);
-	
+    
     agent.status(Pre, STATUS_KIND_FLY, fly_pre);
     agent.status(Init, STATUS_KIND_FLY, fly_init);
     agent.status(Main, STATUS_KIND_FLY, fly_main);
     agent.status(End, STATUS_KIND_FLY, fly_end);
 
-	agent.install();
+    agent.install();
 }
