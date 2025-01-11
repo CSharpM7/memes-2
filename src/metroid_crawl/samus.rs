@@ -169,7 +169,6 @@ pub unsafe extern "C" fn  squat_wait_main(fighter: &mut L2CFighterCommon) -> L2C
     {
         println!("Squat main: no crawl");
         WorkModule::off_flag(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_CRAWL);
-        //smashline::original_status(Main, fighter, *FIGHTER_STATUS_KIND_SQUAT_WAIT)(fighter);
         return fighter.status_SquatWait();
     }
     else {
@@ -207,7 +206,9 @@ unsafe extern "C" fn squat_exit(fighter: &mut L2CFighterCommon) -> L2CValue {
 }
 
 pub unsafe extern "C" fn  bomb_g_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
-    return morph_force_crawl(fighter);
+    let original = smashline::original_status(Exec, fighter,*FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP_G)(fighter);
+    morph_force_crawl(fighter);
+    return original;
 }
 
 pub unsafe extern "C" fn  speciallw_a_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
@@ -215,10 +216,13 @@ pub unsafe extern "C" fn  speciallw_a_exec(fighter: &mut L2CFighterCommon) -> L2
     return 0.into();
 }
 pub unsafe extern "C" fn  speciallw_g_exec(fighter: &mut L2CFighterCommon) -> L2CValue {
-    morph_force_crawl(fighter);
     if WorkModule::is_flag(fighter.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_FROM_CRAWL) {
         WorkModule::off_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_JUMP);
     }
+    let original = smashline::original_status(Exec, fighter,*FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW)(fighter);
+    let speed_x = KineticModule::get_sum_speed_x(fighter.module_accessor, *KINETIC_ENERGY_RESERVE_ATTRIBUTE_MAIN);
+    println!("SpeedX: {speed_x}");
+    morph_force_crawl(fighter);
     if MotionModule::motion_kind(fighter.module_accessor) == hash40("special_lw_end") {
         println!("lw end");
         let cancel_frame = FighterMotionModuleImpl::get_cancel_frame(fighter.module_accessor, Hash40::new("special_lw"), true) as i32;
@@ -227,10 +231,9 @@ pub unsafe extern "C" fn  speciallw_g_exec(fighter: &mut L2CFighterCommon) -> L2
         || status_frame >= cancel_frame-1 {
             println!("Crouch check");
             fighter.change_status(FIGHTER_STATUS_KIND_SQUAT_WAIT.into(), false.into());
-            //WorkModule::on_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CROUCH);
         }
     }
-    return smashline::original_status(Exec, fighter, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW)(fighter);
+    return original;
 }
 
 unsafe extern "C" fn morph_force_crawl(fighter: &mut L2CFighterCommon) -> L2CValue {
@@ -248,15 +251,13 @@ unsafe extern "C" fn morph_force_crawl(fighter: &mut L2CFighterCommon) -> L2CVal
         if stick_y < stick_y_sensitivity {
             println!("Enter crawl for special lw");
             WorkModule::off_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_CHK_CROUCH);
-            //VarModule::set_int(fighter.battle_object, samus::instance::int::BOMB_COOLDOWN, samus::BOMB_COOLDOWN_MAX - (frame as i32));
-            //VarModule::on_flag(fighter.battle_object, samus::instance::flag::SPECIAL_LW_CRAWL);
             ControlModule::clear_command(fighter.module_accessor, false);
-            let cancel_frame = FighterMotionModuleImpl::get_cancel_frame(fighter.module_accessor, Hash40::new_raw(MotionModule::motion_kind(fighter.module_accessor)), true);
-            let lock_frame = SPECIAL_LW_BOMB_LOCKOUT_FRAME;//(cancel_frame - MotionModule::frame(fighter.module_accessor)).max(0.0);
-            WorkModule::set_int(fighter.module_accessor, lock_frame, FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_LOCKOUT);
+            let cancel_frame = FighterMotionModuleImpl::get_cancel_frame(fighter.module_accessor, Hash40::new("special_lw"), true) as i32;
+            let status_frame = fighter.global_table[STATUS_FRAME].get_i32();
+            let lock_frame = (cancel_frame - status_frame).max(0);
+            WorkModule::set_int(fighter.module_accessor, lock_frame as i32, FIGHTER_SAMUS_INSTANCE_WORK_ID_INT_SPECIAL_LW_LOCKOUT);
             println!("Set lock to {lock_frame}");
             MotionModule::change_motion(fighter.module_accessor, Hash40::new("special_lw_end"), 0.0, 4.0, false, 0.0, false, false);
-            //fighter.change_status(FIGHTER_STATUS_KIND_SQUAT_WAIT.into(), false.into());
         }
     }
     return 0.into();
@@ -318,6 +319,7 @@ pub unsafe extern "C" fn  speciallw_g_init(fighter: &mut L2CFighterCommon) -> L2
 }
 pub unsafe extern "C" fn  speciallw_g_main(fighter: &mut L2CFighterCommon) -> L2CValue {
     println!("Special lw g main");
+    let mut speed_x = KineticModule::get_sum_speed_x(fighter.module_accessor, *KINETIC_ENERGY_RESERVE_ATTRIBUTE_MAIN);
     let original = smashline::original_status(Main, fighter, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW)(fighter);
 
     if WorkModule::is_flag(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_SPECIAL_LW_FROM_CRAWL) {
@@ -325,6 +327,45 @@ pub unsafe extern "C" fn  speciallw_g_main(fighter: &mut L2CFighterCommon) -> L2
         MotionModule::change_motion(fighter.module_accessor, Hash40::new("special_lw"), 0.0, 4.0, false, 0.0, false, false);
         WorkModule::on_flag(fighter.module_accessor, FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_FROM_CRAWL);
         WorkModule::on_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_MV);
+        WorkModule::on_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_MV_CONT);
+        WorkModule::off_flag(fighter.module_accessor, *FIGHTER_SAMUS_STATUS_SPECIAL_LW_FLAG_JUMP);
+        println!("Speed Init X: {speed_x}");
+        sv_kinetic_energy!(
+            reset_energy,
+            fighter,
+            FIGHTER_KINETIC_ENERGY_ID_CONTROL,
+            ENERGY_CONTROLLER_RESET_TYPE_FALL_ADJUST,
+            speed_x,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        );
+        let sp_lw_gr_ax_mul = WorkModule::get_param_float(fighter.module_accessor, hash40("param_special_lw"), hash40("sp_lw_gr_ax_mul"));
+        sv_kinetic_energy!(
+            controller_set_accel_x_add,
+            fighter,
+            sp_lw_gr_ax_mul
+        );
+
+        lua_args!(fighter, FIGHTER_KINETIC_ENERGY_ID_CONTROL);
+        let stable_speed_x = sv_kinetic_energy::get_stable_speed_x(fighter.lua_state_agent);
+        fighter.clear_lua_stack();
+        let sp_lw_gr_vx_mul = WorkModule::get_param_float(fighter.module_accessor, hash40("param_special_lw"), hash40("sp_lw_gr_vx_mul"));
+
+        lua_args!(fighter, FIGHTER_KINETIC_ENERGY_ID_CONTROL);
+        let stable_speed_y = sv_kinetic_energy::get_stable_speed_y(fighter.lua_state_agent);
+        fighter.clear_lua_stack();
+
+        sv_kinetic_energy!(
+            set_stable_speed,
+            fighter,
+            FIGHTER_KINETIC_ENERGY_ID_CONTROL,
+            stable_speed_x*sp_lw_gr_vx_mul,
+            stable_speed_y
+        );
+
+        KineticModule::enable_energy(fighter.module_accessor, *FIGHTER_KINETIC_ENERGY_ID_CONTROL);
     }
     WorkModule::off_flag(fighter.module_accessor, FIGHTER_SAMUS_INSTANCE_WORK_ID_FLAG_SPECIAL_LW_FROM_CRAWL);
     return original;
@@ -379,10 +420,10 @@ pub fn install() {
         .status(Exit, *FIGHTER_STATUS_KIND_SQUAT_WAIT, squat_exit)
 
         .status(Exec, *FIGHTER_SAMUS_STATUS_KIND_BOMB_JUMP_G, bomb_g_exec)
-        .status(Exec, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW, speciallw_g_exec)
         
         .status(Init, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW, speciallw_g_init)        
         .status(Main, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW, speciallw_g_main)
+        .status(Exec, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_GROUND_LW, speciallw_g_exec)
         //.status(Exec, *FIGHTER_SAMUS_STATUS_KIND_SPECIAL_AIR_LW, speciallw_a_exec)
 
         //.acmd("game_speciallw", game_speciallw, Priority::Default)
