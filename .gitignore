@@ -5,3 +5,4 @@ Cargo.lock
 **/release
 **/romf
 !src/marth_fireball/romf/
+/src/test
