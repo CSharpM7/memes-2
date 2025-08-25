@@ -1,5 +1,5 @@
 /*
-Arms Reflect
+Bowser Shell Shield (like yoshi)
 */
 mod koopa;
 

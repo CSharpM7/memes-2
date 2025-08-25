@@ -1,35 +1,44 @@
+/*
+Use this as a template for cloning articles. 
+Wave should be a decent test to see if a character can use cloned articles.
+*/
 use smash::lib::lua_const::*;
-use super::imports::imports_acmd::*;
+use crate::imports::imports_acmd::*;
 use smashline::*;
 
-mod pitb_orbitar;
+mod wave;
 
-pub static mut FIGHTER_PITB_GENERATE_ARTICLE_ORBITAR: i32 = 0xE;
+pub const GENERATE_ARTICLE_LAST: i32 = 0x6;
+pub static mut GENERATE_ARTICLE_WAVE: i32 = 0x0;
 
 
 unsafe extern "C" fn game_attack11(agent: &mut L2CAgentBase) {
+    if macros::is_excute(agent) {
+        println!("Req gen");
+    }
     frame(agent.lua_state_agent, 2.0);
     if macros::is_excute(agent) {
-        ArticleModule::generate_article(agent.module_accessor, FIGHTER_PITB_GENERATE_ARTICLE_ORBITAR, false, -1);
+        ArticleModule::generate_article(agent.module_accessor, GENERATE_ARTICLE_WAVE, false, -1);
     }
 }
 
 
 pub fn install_hook() {
 	unsafe {
-		FIGHTER_PITB_GENERATE_ARTICLE_ORBITAR = *FIGHTER_PITB_ARTICLE_TERM + smashline::clone_weapon("miiswordsman", *WEAPON_KIND_MIISWORDSMAN_WAVE, "pitb", "orbitar",false);
+		GENERATE_ARTICLE_WAVE += GENERATE_ARTICLE_LAST + smashline::clone_weapon("miiswordsman", *WEAPON_KIND_MIISWORDSMAN_WAVE, 
+        "pikachu", "wave",false);
 	}
 }
 pub fn install() {
     #[cfg(feature = "dev")]{
 		unsafe {
-			FIGHTER_PITB_GENERATE_ARTICLE_ORBITAR = *FIGHTER_PITB_ARTICLE_TERM;
+			GENERATE_ARTICLE_WAVE += GENERATE_ARTICLE_LAST;
 		}
 	}
 
-    Agent::new("pitb")
+    Agent::new("pikachu")
         .acmd("game_attack11", game_attack11,Priority::Default)
         .install();
 
-	pitb_orbitar::install();
+	wave::install();
 }

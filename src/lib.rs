@@ -24,6 +24,7 @@ use smash::{
 use smashline::*;
 
 //mod air_smash;
+//mod bananza;
 //mod marth_fireball;
 //mod arm_reflect;
 //mod rob_spin;
@@ -32,12 +33,14 @@ use smashline::*;
 //mod ledge_special;
 //mod snake_landmine;
 //mod temp;
-mod koopa_shield;
+//mod koopa_shield;
 //mod metroid_crawl;
 //mod hero_skill;
 //mod burst;
 //mod pikmin_charge;
-//mod swordie_wave;
+mod swordie_wave;
+//mod throw_scale;
+mod krool_tilt;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -52,11 +55,11 @@ pub fn smashline_uninstall() {
 }
 
 pub fn install_hook() {
-    //crate::swordie_wave::install_hook();
+    crate::swordie_wave::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");
-    crate::koopa_shield::install();
+    crate::swordie_wave::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");

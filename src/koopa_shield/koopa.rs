@@ -27,7 +27,7 @@ unsafe extern "C" fn fun_710000a4b0(fighter: &mut L2CFighterCommon){
     let shield_max = WorkModule::get_float(fighter.module_accessor, *FIGHTER_INSTANCE_WORK_ID_FLOAT_GUARD_SHIELD_MAX);
     let mut model_color = (shield_hp / shield_max).clamp(0.05, 1.0);
     if ([*FIGHTER_STATUS_KIND_ESCAPE_F,*FIGHTER_STATUS_KIND_ESCAPE_B].contains(&status_kind)) {
-        let max_frame = 20.0;
+        let max_frame = 15.0;
         let frame = MotionModule::frame(fighter.module_accessor);
         let frame_factor = (frame / max_frame).min(1.0);
         //println!("Factor: {frame_factor} Color: {model_color}");

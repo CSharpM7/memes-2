@@ -1,5 +1,5 @@
 /*
-Arms Reflect
+Lets metroid crawl and use bombs
 */
 pub mod imports;
 pub mod vars;

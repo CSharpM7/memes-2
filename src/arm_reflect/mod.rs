@@ -1,5 +1,5 @@
 /*
-Arms Reflect
+Allow mimmin arms to be reflected 
 */
 
 mod tantan;

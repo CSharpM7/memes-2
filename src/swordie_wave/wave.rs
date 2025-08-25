@@ -50,6 +50,8 @@ pub unsafe extern "C" fn fly_pre(weapon: &mut L2CWeaponCommon) -> L2CValue {
 }
 
 pub unsafe extern "C" fn fly_init(weapon: &mut L2CWeaponCommon) -> L2CValue {
+    println!("Wave generated");
+
     let owner = WorkModule::get_int(weapon.module_accessor, *WEAPON_INSTANCE_WORK_ID_INT_LINK_OWNER) as u32;
     let owner_boma = sv_battle_object::module_accessor(owner);
     let lr = PostureModule::lr(owner_boma);
@@ -57,7 +59,7 @@ pub unsafe extern "C" fn fly_init(weapon: &mut L2CWeaponCommon) -> L2CValue {
     /*
     SNAP TO BONE
     */
-    let owner_bone = Hash40::new("haver");
+    let owner_bone = Hash40::new("head");
     let mut offset = Vector3f{x:0.0,y:0.0,z:0.0};
     
     let mut owner_bone_pos = Vector3f{x:0.0,y:0.0,z:0.0};
@@ -92,20 +94,26 @@ pub unsafe extern "C" fn fly_init(weapon: &mut L2CWeaponCommon) -> L2CValue {
 }
 
 pub unsafe extern "C" fn fly_main(weapon: &mut smashline::L2CWeaponCommon) -> L2CValue {
+    let eff_pos = *PostureModule::pos(weapon.module_accessor);
+    EffectModule::req(weapon.module_accessor, Hash40::new("sys_catch"), 
+    &Vector3f{x: eff_pos.x, y: eff_pos.y+0.0, z: eff_pos.z}, &Vector3f{x: 0.0, y: 0.0, z: 0.0}, 
+    1.0, 0,-1,false,0) as u32;
+
     //Life
     let life = LIFE;
     WorkModule::set_int(weapon.module_accessor, life, *WEAPON_INSTANCE_WORK_ID_INT_INIT_LIFE);
     WorkModule::set_int(weapon.module_accessor, life, *WEAPON_INSTANCE_WORK_ID_INT_LIFE);
+
     //Set Motion
-    MotionModule::change_motion(weapon.module_accessor, Hash40::new("fly"), 0.0, 1.0, false, 0.0, false, false);
+    MotionModule::change_motion(weapon.module_accessor, Hash40::new("custom_fly"), 0.0, 1.0, false, 0.0, false, false);
     
     weapon.fastshift(L2CValue::Ptr(fly_main_status_loop as *const () as _))
 }
 
 unsafe extern "C" fn fly_main_status_loop(weapon: &mut smashline::L2CWeaponCommon) -> smashline::L2CValue {
     //Die on attack collision
-    if !AttackModule::is_attack(weapon.module_accessor, 0, false) 
-    || AttackModule::is_infliction(weapon.module_accessor,*COLLISION_KIND_MASK_HIT){
+    if AttackModule::is_infliction(weapon.module_accessor,*COLLISION_KIND_MASK_HIT) {
+        println!("Death by hit");
         smash_script::notify_event_msc_cmd!(weapon, Hash40::new_raw(0x199c462b5d));
         return 0.into();
     }
@@ -120,6 +128,7 @@ unsafe extern "C" fn fly_main_status_loop(weapon: &mut smashline::L2CWeaponCommo
         1.0, 0,-1,false,0) as u32;
         
         smash_script::notify_event_msc_cmd!(weapon, Hash40::new_raw(0x199c462b5d));
+        println!("Death by timer");
         return 0.into();
     }
 
@@ -131,7 +140,7 @@ unsafe extern "C" fn fly_end(weapon: &mut smashline::L2CWeaponCommon) -> smashli
 }
 
 pub fn install() {
-    let agent = &mut smashline::Agent::new("pitb_orbitar");
+    let agent = &mut smashline::Agent::new("pikachu_wave");
     agent.acmd("game_fly", game_fly,Priority::Low);
     agent.acmd("effect_fly", effect_fly,Priority::Low);
     agent.acmd("sound_fly", sound_fly,Priority::Low);
