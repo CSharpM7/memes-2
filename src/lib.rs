@@ -38,9 +38,10 @@ use smashline::*;
 //mod hero_skill;
 //mod burst;
 //mod pikmin_charge;
-mod swordie_wave;
+//mod swordie_wave;
 //mod throw_scale;
-mod krool_tilt;
+//mod krool_tilt;
+mod koopajr_mech;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -55,11 +56,11 @@ pub fn smashline_uninstall() {
 }
 
 pub fn install_hook() {
-    crate::swordie_wave::install_hook();
+    //crate::koopajr_mech::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");
-    crate::swordie_wave::install();
+    crate::koopajr_mech::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");

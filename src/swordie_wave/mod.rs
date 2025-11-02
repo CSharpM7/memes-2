@@ -26,7 +26,7 @@ unsafe extern "C" fn game_attack11(agent: &mut L2CAgentBase) {
 pub fn install_hook() {
 	unsafe {
 		GENERATE_ARTICLE_WAVE += GENERATE_ARTICLE_LAST + smashline::clone_weapon("miiswordsman", *WEAPON_KIND_MIISWORDSMAN_WAVE, 
-        "pikachu", "wave",false);
+        "pichu", "wave",false);
 	}
 }
 pub fn install() {
@@ -36,7 +36,7 @@ pub fn install() {
 		}
 	}
 
-    Agent::new("pikachu")
+    Agent::new("pichu")
         .acmd("game_attack11", game_attack11,Priority::Default)
         .install();
 

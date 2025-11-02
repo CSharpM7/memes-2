@@ -140,7 +140,7 @@ unsafe extern "C" fn fly_end(weapon: &mut smashline::L2CWeaponCommon) -> smashli
 }
 
 pub fn install() {
-    let agent = &mut smashline::Agent::new("pikachu_wave");
+    let agent = &mut smashline::Agent::new("pichu_wave");
     agent.acmd("game_fly", game_fly,Priority::Low);
     agent.acmd("effect_fly", effect_fly,Priority::Low);
     agent.acmd("sound_fly", sound_fly,Priority::Low);
