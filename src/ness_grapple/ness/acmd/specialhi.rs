@@ -2,6 +2,15 @@ use crate::imports::imports_acmd::*;
 use crate::ness_grapple::imports::*;
 
 unsafe extern "C" fn game_specialhi(agent: &mut L2CAgentBase) {
+    if macros::is_excute(agent) {
+        ArticleModule::generate_article(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE, false, -1);
+        ArticleModule::change_status(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE, 0, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+    }
+    frame(agent.lua_state_agent, 5.0);
+    if macros::is_excute(agent) {
+        let body_angle_intp = WorkModule::get_param_int(agent.module_accessor, hash40("air_lasso_data"), hash40("body_angle_intp"));
+        println!("body_angle_intp: {body_angle_intp}");
+    }
     frame(agent.lua_state_agent, 15.0);
     if macros::is_excute(agent) {
         WorkModule::on_flag(agent.module_accessor, *FIGHTER_PFUSHIGISOU_STATUS_SPECIAL_HI_FLAG_SET_ANGLE);
@@ -19,8 +28,19 @@ unsafe extern "C" fn game_specialhi(agent: &mut L2CAgentBase) {
 
 unsafe extern "C" fn game_specialairhi(agent: &mut L2CAgentBase) {
     if macros::is_excute(agent) {
-        ArticleModule::generate_article(agent.module_accessor, *FIGHTER_PFUSHIGISOU_GENERATE_ARTICLE_VINE, false, -1);
-        ArticleModule::set_visibility_whole(agent.module_accessor, *FIGHTER_PFUSHIGISOU_GENERATE_ARTICLE_VINE, false, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+        ArticleModule::generate_article(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE, false, -1);
+
+        //ArticleModule::set_visibility_whole(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE_HEAD, true, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+        //ArticleModule::set_visibility_whole(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE, true, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+        
+        //ArticleModule::generate_article(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE, false, -1);
+        //ArticleModule::set_visibility_whole(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE, true, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+        //ArticleModule::change_status(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE, WEAPON_NESS_YOYO_HEAD_STATUS_KIND_LASSO, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+
+        //ArticleModule::generate_article(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE_HEAD, false, -1);
+        //ArticleModule::set_visibility_whole(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE_HEAD, true, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+        //ArticleModule::change_status(agent.module_accessor, GENERATE_ARTICLE_GRAPPLE_HEAD, WEAPON_NESS_YOYO_HEAD_STATUS_KIND_LASSO, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+
         WorkModule::on_flag(agent.module_accessor, *FIGHTER_PFUSHIGISOU_STATUS_SPECIAL_HI_SET_MAP_COLL_OFFSET);
     }
     frame(agent.lua_state_agent, 13.0);
@@ -51,7 +71,7 @@ unsafe extern "C" fn game_specialairhi(agent: &mut L2CAgentBase) {
 }
 
 pub fn install(agent: &mut smashline::Agent) {
-    agent.acmd("game_specialhi", game_specialhi, Priority::Default);
+    agent.acmd("game_specialhistart", game_specialhi, Priority::Default);
 
-    agent.acmd("game_specialairhi", game_specialairhi, Priority::Default);
+    agent.acmd("game_specialairhistart", game_specialairhi, Priority::Default);
 }

@@ -1,14 +1,107 @@
 use crate::imports::imports_agent::*;
 use crate::ness_grapple::imports::*;
 
+pub unsafe extern "C" fn lasso_fail_pre(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_pre_AirLassoFailure()
+}
 pub unsafe extern "C" fn lasso_fail_sub_status(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     return 0.into();
 }
-pub unsafe extern "C" fn lasso_fail_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
-    fighter.status_AirLassoFailure(L2CValue::Ptr( lasso_fail_sub_status as *const () as _),
-        hash40("air_catch").into(), WEAPON_PFUSHIGISOU_VINE_STATUS_KIND_REWIND.into());
-    return 0.into();
+pub unsafe extern "C" fn lasso_fail_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_end_AirLassoFailure()
 }
+
+pub unsafe extern "C" fn lasso_fail_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    return fighter.status_AirLassoFailure(L2CValue::Ptr( lasso_fail_sub_status as *const () as _),
+        hash40("air_catch").into(), WEAPON_NESS_YOYO_STATUS_KIND_REWIND.into());
+}
+
+pub unsafe extern "C" fn lasso_hang_pre(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_pre_AirLassoHang()
+}
+pub unsafe extern "C" fn lasso_hang_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    SoundModule::play_se(fighter.module_accessor, Hash40::new("se_common_cliff_catch"), true, false, false, false, enSEType(0));
+
+    println!("Cliff catch?");
+    let to_return = fighter.status_AirLassoHang(hash40("joint8").into(), FIGHTER_CLIFF_HANG_DATA_DEFAULT.into(), hash40("rot").into());
+    fighter.set_cliff_hangdata(10.0,19.0,1.0,-1.0);
+    //common_airlassohang(fighter,hash40("vine6").into(),hash40("rot").into());
+    if PostureModule::lr(fighter.module_accessor) < 0.0 {
+        WorkModule::set_int(fighter.module_accessor, *FIGHTER_STATUS_AIR_LASSO_BODY_FLIP_X, *FIGHTER_STATUS_AIR_LASSO_HANG_WORK_INT_BODY_FLIP);
+    }
+    return to_return;
+}
+pub unsafe extern "C" fn lasso_hang_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_end_AirLassoHang()
+}
+
+pub unsafe extern "C" fn lasso_landing_pre(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_pre_AirLassoLanding()
+}
+pub unsafe extern "C" fn lasso_landing_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_AirLassoLanding(WEAPON_NESS_YOYO_STATUS_KIND_EXHAUST.into())
+}
+pub unsafe extern "C" fn lasso_landing_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_end_AirLassoLanding()
+}
+
+pub unsafe extern "C" fn lasso_reach_pre(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_pre_AirLassoReach()
+}
+pub unsafe extern "C" fn lasso_reach_init(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    println!("Reach init");
+    fighter.FighterStatusUniqProcessAirLassoReach_init_status()
+}
+pub unsafe extern "C" fn lasso_reach_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    println!("Reach main");
+    ArticleModule::remove_exist(fighter.module_accessor, GENERATE_ARTICLE_GRAPPLE, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
+
+    ArticleModule::generate_article(fighter.module_accessor, GENERATE_ARTICLE_GRAPPLE, false, -1);
+    fighter.status_AirLassoReach(WEAPON_NESS_YOYO_STATUS_KIND_REACH.into())
+}
+pub unsafe extern "C" fn lasso_reach_exec(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.FighterStatusUniqProcessAirLassoReach_exec_fix_pos()
+}
+pub unsafe extern "C" fn lasso_reach_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    WorkModule::set_int(fighter.module_accessor, WEAPON_NESS_YOYO_STATUS_KIND_REACH, *FIGHTER_STATUS_AIR_LASSO_REACH_WORK_INT_ARTICLE_STATUS);
+    fighter.status_end_AirLassoReach()
+}
+
+
+pub unsafe extern "C" fn lasso_rewind_pre(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_pre_AirLassoRewind()
+}
+pub unsafe extern "C" fn lasso_rewind_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_AirLassoRewind(WEAPON_NESS_YOYO_STATUS_KIND_REWIND.into())
+}
+pub unsafe extern "C" fn lasso_rewind_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_end_AirLassoRewind()
+}
+
+pub fn install(agent: &mut smashline::Agent) {
+	agent.status(Pre, *FIGHTER_STATUS_KIND_AIR_LASSO_FAILURE, lasso_fail_pre);
+	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_FAILURE, lasso_fail_main);
+	agent.status(End, *FIGHTER_STATUS_KIND_AIR_LASSO_FAILURE, lasso_fail_end);
+
+	agent.status(Pre, *FIGHTER_STATUS_KIND_AIR_LASSO_HANG, lasso_hang_pre);
+	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_HANG, lasso_hang_main);
+	agent.status(End, *FIGHTER_STATUS_KIND_AIR_LASSO_HANG, lasso_hang_end);
+
+	agent.status(Pre, *FIGHTER_STATUS_KIND_AIR_LASSO_LANDING, lasso_landing_pre);
+	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_LANDING, lasso_landing_main);
+	agent.status(End, *FIGHTER_STATUS_KIND_AIR_LASSO_LANDING, lasso_landing_end);
+
+	agent.status(Pre, *FIGHTER_STATUS_KIND_AIR_LASSO_REACH, lasso_reach_pre);
+	agent.status(Init, *FIGHTER_STATUS_KIND_AIR_LASSO_REACH, lasso_reach_init);
+	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_REACH, lasso_reach_main);
+	//agent.status(Exec, *FIGHTER_STATUS_KIND_AIR_LASSO_REACH, lasso_reach_exec);
+	agent.status(End, *FIGHTER_STATUS_KIND_AIR_LASSO_REACH, lasso_reach_end);
+
+	agent.status(Pre, *FIGHTER_STATUS_KIND_AIR_LASSO_REWIND, lasso_rewind_pre);
+	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_REWIND, lasso_rewind_main);
+	agent.status(End, *FIGHTER_STATUS_KIND_AIR_LASSO_REWIND, lasso_rewind_end);
+}
+
 
 //NOT NEEDED
 pub unsafe extern "C" fn common_airlassohang(fighter: &mut smashline::L2CFighterCommon, param_1: L2CValue, param_3: L2CValue) {
@@ -69,42 +162,3 @@ pub unsafe extern "C" fn common_airlassohang(fighter: &mut smashline::L2CFighter
     fighter.sub_shift_status_main(L2CValue::Ptr(L2CFighterCommon_bind_address_call_status_air_lasso_hang_main as *const () as _));
 }
 ////////////////
-
-pub unsafe extern "C" fn lasso_hang_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
-    WorkModule::on_flag(fighter.module_accessor, *FIGHTER_STATUS_AIR_LASSO_HANG_FLAG_NOT_ARM);
-    if PostureModule::lr(fighter.module_accessor) < 0.0 {
-        WorkModule::set_int(fighter.module_accessor, *FIGHTER_STATUS_AIR_LASSO_BODY_FLIP_Y, *FIGHTER_STATUS_AIR_LASSO_HANG_WORK_INT_BODY_FLIP);
-    }
-    SoundModule::play_se(fighter.module_accessor, Hash40::new("se_common_cliff_catch"), true, false, false, false, enSEType(0));
-
-    fighter.status_AirLassoHang(hash40("vine6").into(), FIGHTER_CLIFF_HANG_DATA_DEFAULT.into(), hash40("rot").into());
-    fighter.set_cliff_hangdata(10.0,19.0,1.0,-1.0);
-    //common_airlassohang(fighter,hash40("vine6").into(),hash40("rot").into());
-    return 0.into();
-}
-pub unsafe extern "C" fn lasso_landing_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
-    fighter.status_AirLassoLanding(WEAPON_PFUSHIGISOU_VINE_STATUS_KIND_EXHAUST.into());
-    return 0.into();
-}
-pub unsafe extern "C" fn lasso_reach_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
-    fighter.status_AirLassoReach(WEAPON_PFUSHIGISOU_VINE_STATUS_KIND_REACH.into());
-    return 0.into();
-}
-pub unsafe extern "C" fn lasso_reach_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
-    WorkModule::set_int(fighter.module_accessor, *WEAPON_PFUSHIGISOU_VINE_STATUS_KIND_REACH, *FIGHTER_STATUS_AIR_LASSO_REACH_WORK_INT_ARTICLE_STATUS);
-    fighter.status_end_AirLassoReach();
-    return 0.into();
-}
-pub unsafe extern "C" fn lasso_rewind_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
-    fighter.status_AirLassoRewind(WEAPON_PFUSHIGISOU_VINE_STATUS_KIND_HANG_REWIND.into());
-    return 0.into();
-}
-
-pub fn install(agent: &mut smashline::Agent) {
-	//agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_FAILURE, lasso_fail_main);
-	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_HANG, lasso_hang_main);
-	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_LANDING, lasso_landing_main);
-	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_REACH, lasso_reach_main);
-	agent.status(End, *FIGHTER_STATUS_KIND_AIR_LASSO_REACH, lasso_reach_end);
-	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_REWIND, lasso_rewind_main);
-}

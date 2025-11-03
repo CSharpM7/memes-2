@@ -57,7 +57,7 @@ pub fn smashline_uninstall() {
 }
 
 pub fn install_hook() {
-    //crate::ness_grapple::install_hook();
+    crate::ness_grapple::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");

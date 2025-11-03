@@ -34,10 +34,10 @@ pub unsafe extern "C" fn specialhi_init(fighter: &mut smashline::L2CFighterCommo
     0.into()
 }
 unsafe extern "C" fn specialhi_main(fighter: &mut L2CFighterCommon) -> L2CValue {
-    //let mot_g = hash40("special_hi_start");
-    //let mot_a = hash40("special_air_hi_start");
-    let mot_g = hash40("special_hi");
-    let mot_a = hash40("special_air_hi");
+    let mot_g = hash40("special_hi_start");
+    let mot_a = hash40("special_air_hi_start");
+    //let mot_g = hash40("special_hi");
+    //let mot_a = hash40("special_air_hi");
     fighter.sub_change_motion_by_situation(Hash40::new_raw(mot_g).into(), Hash40::new_raw(mot_a).into(), false.into());
 
     fighter.sub_set_special_start_common_kinetic_setting(Hash40::new("param_special_hi").into());
@@ -46,7 +46,7 @@ unsafe extern "C" fn specialhi_main(fighter: &mut L2CFighterCommon) -> L2CValue 
     fighter.set_cliff_hangdata(72.0,65.0,-18.0,-52.0);
     WorkModule::unable_transition_term_group(fighter.module_accessor, *FIGHTER_STATUS_TRANSITION_GROUP_CHK_AIR_CLIFF);
 
-    WorkModule::set_int(fighter.module_accessor, *FIGHTER_PFUSHIGISOU_GENERATE_ARTICLE_VINE, *FIGHTER_STATUS_AIR_LASSO_WORK_INT_ARTICLE_ID);
+    WorkModule::set_int(fighter.module_accessor, GENERATE_ARTICLE_GRAPPLE, *FIGHTER_STATUS_AIR_LASSO_WORK_INT_ARTICLE_ID);
     WorkModule::set_int(fighter.module_accessor, *ARTICLE_ID_NONE, *FIGHTER_STATUS_AIR_LASSO_WORK_INT_ARTICLE2_ID);
     WorkModule::off_flag(fighter.module_accessor, FIGHTER_NESS_STATUS_SPECIAL_HI_FLAG_AIR_LASSO_FAIL);
 
@@ -72,10 +72,10 @@ unsafe extern "C" fn specialhi_main_loop(fighter: &mut L2CFighterCommon) -> L2CV
     }
     if !StatusModule::is_changing(fighter.module_accessor)
     && StatusModule::is_situation_changed(fighter.module_accessor) {
-        //let mot_g = hash40("special_hi_start");
-        //let mot_a = hash40("special_air_hi_start");
-        let mot_g = hash40("special_hi");
-        let mot_a = hash40("special_air_hi");
+        let mot_g = hash40("special_hi_start");
+        let mot_a = hash40("special_air_hi_start");
+        //let mot_g = hash40("special_hi");
+        //let mot_a = hash40("special_air_hi");
         fighter.sub_change_motion_by_situation(Hash40::new_raw(mot_g).into(), Hash40::new_raw(mot_a).into(), true.into());
         fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_GROUND_STOP.into(), FIGHTER_KINETIC_TYPE_AIR_STOP.into());
         fighter.sub_set_ground_correct_by_situation(true.into());
@@ -108,6 +108,7 @@ unsafe extern "C" fn specialhi_main_loop(fighter: &mut L2CFighterCommon) -> L2CV
 pub unsafe extern "C" fn specialhi_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     if fighter.global_table[STATUS_KIND].get_i32() != *FIGHTER_STATUS_KIND_AIR_LASSO_REACH {
         fighter.status_end_AirLasso();
+        ArticleModule::remove_exist(fighter.module_accessor, GENERATE_ARTICLE_GRAPPLE, ArticleOperationTarget(*ARTICLE_OPE_TARGET_ALL));
     }
     0.into()
 }
@@ -117,5 +118,5 @@ pub fn install(agent: &mut smashline::Agent) {
 	agent.status(Pre, *FIGHTER_STATUS_KIND_SPECIAL_HI, specialhi_pre);
 	agent.status(Main, *FIGHTER_STATUS_KIND_SPECIAL_HI, specialhi_main);
 	agent.status(Exec, *FIGHTER_STATUS_KIND_SPECIAL_HI, empty_status);
-	agent.status(End, *FIGHTER_STATUS_KIND_SPECIAL_N, specialhi_end);
+	agent.status(End, *FIGHTER_STATUS_KIND_SPECIAL_HI, specialhi_end);
 }
