@@ -41,7 +41,8 @@ use smashline::*;
 //mod swordie_wave;
 //mod throw_scale;
 //mod krool_tilt;
-mod koopajr_mech;
+//mod koopajr_mech;
+mod ness_grapple;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -56,11 +57,11 @@ pub fn smashline_uninstall() {
 }
 
 pub fn install_hook() {
-    //crate::koopajr_mech::install_hook();
+    //crate::ness_grapple::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");
-    crate::koopajr_mech::install();
+    crate::ness_grapple::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
