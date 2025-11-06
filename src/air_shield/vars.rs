@@ -1,0 +1,1 @@
+pub const CHECK_AIR_ESCAPE_UNIQ: i32 = 0x2F;

@@ -7,7 +7,7 @@ unsafe extern "C" fn ness_frame(fighter: &mut L2CFighterCommon) {
     let is_lasso = (*FIGHTER_STATUS_KIND_AIR_LASSO..*FIGHTER_STATUS_KIND_AIR_LASSO_LANDING+1).contains(&status);
 
     if is_lasso && status_frame < 1.0 {
-        let status_hex = format!("{:X}", status);
+        let status_hex = to_hex(status as u64);
         println!("Status: {status_hex}");
     }
     /*

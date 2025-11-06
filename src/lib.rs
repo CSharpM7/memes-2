@@ -42,7 +42,8 @@ use smashline::*;
 //mod throw_scale;
 //mod krool_tilt;
 //mod koopajr_mech;
-mod ness_grapple;
+mod air_shield;
+mod test;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -57,11 +58,12 @@ pub fn smashline_uninstall() {
 }
 
 pub fn install_hook() {
-    crate::ness_grapple::install_hook();
+    println!("[smashline_memes2] Hooking memes");
+    crate::air_shield::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");
-    crate::ness_grapple::install();
+    crate::air_shield::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
@@ -69,17 +71,16 @@ pub fn uninstall() {
 
 #[skyline::main(name = "smashline2_memes")]
 pub fn main() {
+    #[cfg(feature = "dev")]
+    return;
+
     #[cfg(feature = "devhook")]
     println!("[smashline_memes2] Devhook Loading memes");
 
-    #[cfg(not(feature = "dev"))]
     install_hook();
 	
     #[cfg(feature = "devhook")]
 	return;
 
-    #[cfg(not(feature = "dev"))]
     install();
-    #[cfg(feature = "dev")]
-    smashline_install();
 }
