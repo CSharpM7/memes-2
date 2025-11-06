@@ -67,38 +67,41 @@ unsafe extern "C" fn status_pre_GuardOff(fighter: &mut L2CFighterCommon) -> L2CV
     status_pre_Guard_common(fighter,*FIGHTER_STATUS_KIND_GUARD_OFF)
 }
 
-unsafe extern "C" fn status_guard_update_kinetics(fighter: &mut L2CFighterCommon) {
+unsafe extern "C" fn status_guard_update_kinetics(fighter: &mut L2CFighterCommon) -> L2CValue {
     if fighter.global_table[SITUATION_KIND].get_i32() == *SITUATION_KIND_GROUND 
-    && fighter.global_table[PREV_SITUATION_KIND].get_i32() != *SITUATION_KIND_GROUND  {
+    && fighter.global_table[PREV_SITUATION_KIND].get_i32() != *SITUATION_KIND_GROUND {
         fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_MOTION.into(), FIGHTER_KINETIC_TYPE_FALL.into());
         fighter.sub_set_ground_correct_by_situation(false.into());
+        return false.into();
     }
     else if fighter.global_table[SITUATION_KIND].get_i32() == *SITUATION_KIND_AIR 
-    && fighter.global_table[PREV_SITUATION_KIND].get_i32() != *SITUATION_KIND_AIR  {
-        fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_MOTION.into(), FIGHTER_KINETIC_TYPE_FALL.into());
-        fighter.sub_set_ground_correct_by_situation(false.into());
+    && fighter.global_table[PREV_SITUATION_KIND].get_i32() != *SITUATION_KIND_AIR {
+        let status = StatusModule::status_kind(fighter.module_accessor);
+        let next_status = if status == *FIGHTER_STATUS_KIND_GUARD_DAMAGE {FIGHTER_STATUS_KIND_DAMAGE_FALL} else {FIGHTER_STATUS_KIND_FALL};
+        fighter.change_status(next_status.into(), false.into());
+        ControlModule::clear_command(fighter.module_accessor, true);
+        return true.into();
+        //fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_MOTION.into(), FIGHTER_KINETIC_TYPE_FALL.into());
+        //fighter.sub_set_ground_correct_by_situation(false.into());
     }
+    return false.into();
 }
 
 #[skyline::hook(replace = L2CFighterCommon_sub_status_guard_on_main_air_common)]
 unsafe extern "C" fn sub_status_guard_on_main_air_common(fighter: &mut L2CFighterCommon) -> L2CValue {
-    status_guard_update_kinetics(fighter);
-    0.into()
+    status_guard_update_kinetics(fighter)
 }
 #[skyline::hook(replace = L2CFighterCommon_status_guard_main_common_air)]
 unsafe extern "C" fn status_guard_main_common_air(fighter: &mut L2CFighterCommon) -> L2CValue {
-    status_guard_update_kinetics(fighter);
-    0.into()
+    status_guard_update_kinetics(fighter)
 }
 #[skyline::hook(replace = L2CFighterCommon_status_guard_damage_main_common_air)]
 unsafe extern "C" fn status_guard_damage_main_common_air(fighter: &mut L2CFighterCommon) -> L2CValue {
-    status_guard_update_kinetics(fighter);
-    0.into()
+    status_guard_update_kinetics(fighter)
 }
 #[skyline::hook(replace = L2CFighterCommon_sub_status_guard_off_main_common_air)]
 unsafe extern "C" fn sub_status_guard_off_main_common_air(fighter: &mut L2CFighterCommon) -> L2CValue {
-    status_guard_update_kinetics(fighter);
-    0.into()
+    status_guard_update_kinetics(fighter)
 }
 
 #[skyline::hook(replace = L2CFighterCommon_sub_transition_group_check_air_escape)]
