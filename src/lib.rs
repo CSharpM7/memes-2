@@ -42,7 +42,7 @@ use smashline::*;
 //mod throw_scale;
 //mod krool_tilt;
 //mod koopajr_mech;
-mod air_shield;
+mod fighter_fly;
 mod test;
 
 mod imports;
@@ -59,11 +59,11 @@ pub fn smashline_uninstall() {
 
 pub fn install_hook() {
     println!("[smashline_memes2] Hooking memes");
-    crate::air_shield::install_hook();
+    crate::fighter_fly::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");
-    crate::air_shield::install();
+    crate::fighter_fly::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");

@@ -68,14 +68,17 @@ unsafe extern "C" fn status_pre_GuardOff(fighter: &mut L2CFighterCommon) -> L2CV
 }
 
 unsafe extern "C" fn status_guard_update_kinetics(fighter: &mut L2CFighterCommon) -> L2CValue {
+    let status_frame = fighter.global_table[STATUS_FRAME].get_i32();
     if fighter.global_table[SITUATION_KIND].get_i32() == *SITUATION_KIND_GROUND 
-    && fighter.global_table[PREV_SITUATION_KIND].get_i32() != *SITUATION_KIND_GROUND {
+    && fighter.global_table[PREV_SITUATION_KIND].get_i32() != *SITUATION_KIND_GROUND 
+    && status_frame > 2 {
         fighter.sub_change_kinetic_type_by_situation(FIGHTER_KINETIC_TYPE_MOTION.into(), FIGHTER_KINETIC_TYPE_FALL.into());
         fighter.sub_set_ground_correct_by_situation(false.into());
         return false.into();
     }
     else if fighter.global_table[SITUATION_KIND].get_i32() == *SITUATION_KIND_AIR 
-    && fighter.global_table[PREV_SITUATION_KIND].get_i32() != *SITUATION_KIND_AIR {
+    && fighter.global_table[PREV_SITUATION_KIND].get_i32() != *SITUATION_KIND_AIR 
+    && status_frame > 2 {
         let status = StatusModule::status_kind(fighter.module_accessor);
         let next_status = if status == *FIGHTER_STATUS_KIND_GUARD_DAMAGE {FIGHTER_STATUS_KIND_DAMAGE_FALL} else {FIGHTER_STATUS_KIND_FALL};
         fighter.change_status(next_status.into(), false.into());
@@ -166,13 +169,71 @@ unsafe extern "C" fn status_guardoff_main(fighter: &mut L2CFighterCommon) -> L2C
 }
 
 
+#[skyline::hook(replace = L2CFighterCommon_status_GuardDamage_Main)]
+unsafe extern "C" fn status_guarddamage_main(fighter: &mut L2CFighterCommon) -> L2CValue {
+    if fighter.global_table[SITUATION_KIND].get_i32() == *SITUATION_KIND_GROUND {
+        return original!()(fighter);
+    }
+    if fighter.status_guard_damage_main_common_air().get_bool() {
+        return 0.into();
+    }
+    if fighter.global_table[SITUATION_KIND].get_i32() == *SITUATION_KIND_GROUND {
+        if WorkModule::is_flag(fighter.module_accessor, *FIGHTER_STATUS_GUARD_ON_WORK_FLAG_JUST_SHIELD) {
+            if fighter.FighterStatusGuard__is_continue_just_shield_count().get_bool() {
+                 fighter.status_guard_damage_main_common();
+                 return 0.into();
+            }
+            if StopModule::is_hit(fighter.module_accessor) {
+                WorkModule::on_flag(fighter.module_accessor, *FIGHTER_INSTANCE_WORK_ID_FLAG_ENABLE_TRANSITION_STATUS_STOP);
+                if CancelModule::is_enable_cancel(fighter.module_accessor) {
+                    if fighter.sub_wait_ground_check_common(false.into()).get_bool() {
+                        StopModule::cancel_hit_stop(fighter.module_accessor);
+                        return 0.into();
+                    }
+                }
+                WorkModule::off_flag(fighter.module_accessor, *FIGHTER_INSTANCE_WORK_ID_FLAG_ENABLE_TRANSITION_STATUS_STOP);
+            };
+        }
+    }
+    fighter.status_guard_damage_main_common();
+    0.into()
+}
+
+#[skyline::hook(replace = L2CFighterCommon_status_guard_damage_main_common)]
+unsafe extern "C" fn status_guard_damage_main_common(fighter: &mut L2CFighterCommon) -> L2CValue {
+    if fighter.global_table[SITUATION_KIND].get_i32() == *SITUATION_KIND_GROUND {
+        return original!()(fighter);
+    }
+    if WorkModule::is_flag(fighter.module_accessor, *FIGHTER_STATUS_GUARD_ON_WORK_FLAG_JUST_SHIELD) {
+        if CancelModule::is_enable_cancel(fighter.module_accessor)
+        && fighter.sub_air_check_fall_common().get_bool() {
+            return 1.into();
+        }
+        if MotionModule::is_end(fighter.module_accessor) {
+            fighter.change_status(FIGHTER_STATUS_KIND_FALL.into(), false.into());
+            return 0.into();
+        }
+    }
+    else if WorkModule::get_int(fighter.module_accessor, *FIGHTER_STATUS_GUARD_DAMAGE_WORK_INT_STIFF_FRAME) == 0 {
+        if WorkModule::is_enable_transition_term(fighter.module_accessor, *FIGHTER_STATUS_TRANSITION_TERM_ID_CONT_GUARD) {
+            fighter.change_status(FIGHTER_STATUS_KIND_GUARD.into(), false.into());
+            return 1.into();
+        }
+        else {
+            fighter.change_status(FIGHTER_STATUS_KIND_GUARD_OFF.into(), false.into());
+            return 1.into();
+        }
+    }
+    //original!()(fighter)
+    0.into()
+}
 
 fn nro_hook(info: &skyline::nro::NroInfo) {
     if info.name == "common" {
         skyline::install_hooks!(
             status_pre_GuardOn,
             status_pre_Guard,
-            status_pre_GuardDamage,
+            //status_pre_GuardDamage,
             status_pre_GuardOff,
 
             sub_status_guard_on_main_air_common,
@@ -184,7 +245,10 @@ fn nro_hook(info: &skyline::nro::NroInfo) {
 
             status_guardon_main,
             status_guard_main_common,
-            status_guardoff_main
+            status_guardoff_main,
+
+            //status_guarddamage_main,
+            //status_guard_damage_main_common
         );
     }
 }
