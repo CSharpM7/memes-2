@@ -42,7 +42,8 @@ use smashline::*;
 //mod throw_scale;
 //mod krool_tilt;
 //mod koopajr_mech;
-mod fighter_fly;
+//mod fighter_fly;
+mod buddy_fly;
 mod test;
 
 mod imports;
@@ -59,11 +60,11 @@ pub fn smashline_uninstall() {
 
 pub fn install_hook() {
     println!("[smashline_memes2] Hooking memes");
-    crate::fighter_fly::install_hook();
+    //crate::buddy_fly::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");
-    crate::fighter_fly::install();
+    crate::buddy_fly::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
