@@ -273,9 +273,9 @@ unsafe extern "C" fn special_s2fly_main_loop(fighter: &mut L2CFighterCommon) -> 
         let mul = lerp(0.5,1.0,t);
         AttackModule::set_power_mul(fighter.module_accessor, mul);
     }
-    if frame > 300 
+    if frame > 45 
     || speed_x <= stable_speed {
-        fighter.change_status_by_situation(FIGHTER_STATUS_KIND_DOWN.into(), FIGHTER_STATUS_KIND_DAMAGE_FALL.into(), false.into());
+        fighter.change_status_by_situation(FIGHTER_STATUS_KIND_DOWN.into(), FIGHTER_STATUS_KIND_FALL.into(), false.into());
         return 0.into();
     }
     if MotionModule::frame(fighter.module_accessor) > 16.0 {
@@ -309,23 +309,23 @@ unsafe extern "C" fn special_s2fly_exit(fighter: &mut L2CFighterCommon) -> L2CVa
 }
 
 pub fn install_helper(agent: &mut smashline::Agent) {
-    agent.acmd("game_specials1",game_specials1);
-    agent.acmd("game_specialairs1",game_specials1);
-    agent.acmd("effect_specials1",effect_specials1);
-    agent.acmd("effect_specialairs1",effect_specials1);
-    agent.acmd("sound_specials1",sound_specials1);
-    agent.acmd("sound_specialairs1",sound_specials1);
+    agent.acmd("game_specials1",game_specials1,Priority::Default);
+    agent.acmd("game_specialairs1",game_specials1,Priority::Default);
+    agent.acmd("effect_specials1",effect_specials1,Priority::Default);
+    agent.acmd("effect_specialairs1",effect_specials1,Priority::Default);
+    agent.acmd("sound_specials1",sound_specials1,Priority::Default);
+    agent.acmd("sound_specialairs1",sound_specials1,Priority::Default);
 
-    agent.acmd("game_specials2_nana",empty_acmd);
-    agent.acmd("effect_specials2_nana",empty_acmd);
-    agent.acmd("sound_specials2_nana",empty_acmd);
+    agent.acmd("game_specials2_nana",empty_acmd,Priority::Default);
+    agent.acmd("effect_specials2_nana",empty_acmd,Priority::Default);
+    agent.acmd("sound_specials2_nana",empty_acmd,Priority::Default);
 
-    agent.acmd("game_specialairs2_nana",game_specialairs2nana);
-    agent.acmd("game_specialairs2",game_specialairs2nana);
-    agent.acmd("effect_specialairs2",effect_specialairs2nana);
-    agent.acmd("effect_specialairs2_nana",effect_specialairs2nana);
-    agent.acmd("sound_specialairs2",sound_specialairs2nana);
-    agent.acmd("sound_specialairs2_nana",sound_specialairs2nana);
+    agent.acmd("game_specialairs2_nana",game_specialairs2nana,Priority::Default);
+    agent.acmd("game_specialairs2",game_specialairs2nana,Priority::Default);
+    agent.acmd("effect_specialairs2",effect_specialairs2nana,Priority::Default);
+    agent.acmd("effect_specialairs2_nana",effect_specialairs2nana,Priority::Default);
+    agent.acmd("sound_specialairs2",sound_specialairs2nana,Priority::Default);
+    agent.acmd("sound_specialairs2_nana",sound_specialairs2nana,Priority::Default);
     
     agent.status(Main, *FIGHTER_STATUS_KIND_SPECIAL_S, special_s1_main);
     agent.status(Exec, *FIGHTER_STATUS_KIND_SPECIAL_S, empty_status);

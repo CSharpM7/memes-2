@@ -1,5 +1,4 @@
 #![feature(
-    concat_idents,
     proc_macro_hygiene
 )]
 #![allow(
@@ -43,7 +42,8 @@ use smashline::*;
 //mod krool_tilt;
 //mod koopajr_mech;
 //mod fighter_fly;
-mod buddy_fly;
+//mod buddy_fly;
+mod accessories;
 mod test;
 
 mod imports;
@@ -60,11 +60,11 @@ pub fn smashline_uninstall() {
 
 pub fn install_hook() {
     println!("[smashline_memes2] Hooking memes");
-    //crate::buddy_fly::install_hook();
+    crate::test::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");
-    crate::buddy_fly::install();
+    crate::test::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
