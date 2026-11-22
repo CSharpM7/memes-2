@@ -6,3 +6,4 @@ Cargo.lock
 **/romf
 !src/marth_fireball/romf/
 /src/test
+/src/snake_landmine/brawl
