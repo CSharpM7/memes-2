@@ -15,8 +15,10 @@ mod ness;
 pub fn install_hook() {
 	unsafe {
         println!("Stored grapple");
+        /*
 		vars::GENERATE_ARTICLE_GRAPPLE += vars::GENERATE_ARTICLE_LAST + smashline::clone_weapon("dolly", *WEAPON_KIND_DOLLY_CAP, 
-        "ness", "grapple",false);
+        "ness", "grapple",false); 
+        */
 
         let mut param_ints: Vec<(u64,u64,i32)> = Vec::new();
         let mut param_floats: Vec<(u64,u64,f32)> = Vec::new();

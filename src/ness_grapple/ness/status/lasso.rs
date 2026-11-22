@@ -1,6 +1,11 @@
 use crate::imports::imports_agent::*;
 use crate::ness_grapple::imports::*;
 
+pub unsafe extern "C" fn lasso_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    return fighter.status_AirLasso(GENERATE_ARTICLE_GRAPPLE.into(),ARTICLE_ID_NONE.into(),
+    FIGHTER_NESS_CLIFF_HANG_DATA_AIR_LASSO.into(), true.into());
+}
+
 pub unsafe extern "C" fn lasso_fail_pre(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     fighter.status_pre_AirLassoFailure()
 }
@@ -22,14 +27,20 @@ pub unsafe extern "C" fn lasso_hang_pre(fighter: &mut smashline::L2CFighterCommo
 pub unsafe extern "C" fn lasso_hang_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     SoundModule::play_se(fighter.module_accessor, Hash40::new("se_common_cliff_catch"), true, false, false, false, enSEType(0));
 
-    println!("Cliff catch?");
-    let to_return = fighter.status_AirLassoHang(hash40("joint8").into(), FIGHTER_CLIFF_HANG_DATA_DEFAULT.into(), hash40("rot").into());
+    let article_tip_joint = hash40("joint08");
+    let check_cliff_joint = hash40("handr");
+
+    //FIGHTER_SAMUS_CLIFF_HANG_DATA_AIR_LASSO_HANG
+    fighter.status_AirLassoHang(article_tip_joint.into(), FIGHTER_NESS_CLIFF_HANG_DATA_AIR_LASSO_HANG.into(), check_cliff_joint.into());
     fighter.set_cliff_hangdata(10.0,19.0,1.0,-1.0);
     //common_airlassohang(fighter,hash40("vine6").into(),hash40("rot").into());
     if PostureModule::lr(fighter.module_accessor) < 0.0 {
         WorkModule::set_int(fighter.module_accessor, *FIGHTER_STATUS_AIR_LASSO_BODY_FLIP_X, *FIGHTER_STATUS_AIR_LASSO_HANG_WORK_INT_BODY_FLIP);
     }
-    return to_return;
+    fighter.sub_shift_status_main(L2CValue::Ptr(lasso_hang_loop_main as *const () as _))
+}
+pub unsafe extern "C" fn lasso_hang_loop_main(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
+    fighter.status_air_lasso_hang_main()
 }
 pub unsafe extern "C" fn lasso_hang_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     fighter.status_end_AirLassoHang()
@@ -79,6 +90,10 @@ pub unsafe extern "C" fn lasso_rewind_end(fighter: &mut smashline::L2CFighterCom
 }
 
 pub fn install(agent: &mut smashline::Agent) {
+	//agent.status(Pre, *FIGHTER_STATUS_KIND_AIR_LASSO, lasso_pre);
+	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO, lasso_main);
+	//agent.status(End, *FIGHTER_STATUS_KIND_AIR_LASSO, lasso_end);
+
 	agent.status(Pre, *FIGHTER_STATUS_KIND_AIR_LASSO_FAILURE, lasso_fail_pre);
 	agent.status(Main, *FIGHTER_STATUS_KIND_AIR_LASSO_FAILURE, lasso_fail_main);
 	agent.status(End, *FIGHTER_STATUS_KIND_AIR_LASSO_FAILURE, lasso_fail_end);

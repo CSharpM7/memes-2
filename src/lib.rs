@@ -30,7 +30,7 @@ use smashline::*;
 //mod ike_air;
 //mod nana_rocket;
 //mod ledge_special;
-//mod snake_landmine;
+mod snake_landmine;
 //mod temp;
 //mod koopa_shield;
 //mod metroid_crawl;
@@ -43,8 +43,9 @@ use smashline::*;
 //mod koopajr_mech;
 //mod fighter_fly;
 //mod buddy_fly;
-mod accessories;
-mod test;
+//mod accessories;
+//mod ness_grapple;
+mod blockclone;
 
 mod imports;
 use crate::imports::imports_agent::*;
@@ -60,11 +61,11 @@ pub fn smashline_uninstall() {
 
 pub fn install_hook() {
     println!("[smashline_memes2] Hooking memes");
-    crate::test::install_hook();
+    crate::snake_landmine::install_hook();
 }
 pub fn install() {
     println!("[smashline_memes2] Loading memes");
-    crate::test::install();
+    crate::snake_landmine::install();
 }
 pub fn uninstall() {
     println!("Uninstalling...");
