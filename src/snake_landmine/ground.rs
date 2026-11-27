@@ -1,4 +1,5 @@
 use crate::imports::imports_acmd::*;
+use crate::imports::imports_agent::*;
 
 pub const DEFAULT_GENERATE_ARTICLE_ID: i32 = 0x0;
 pub static mut GENERATE_ARTICLE_ID: i32 = 0x0;
@@ -52,7 +53,7 @@ unsafe extern "C" fn wait_main_status_loop(weapon: &mut smashline::L2CWeaponComm
         MotionModule::change_motion(weapon.module_accessor, Hash40::new_raw(owner_motion), 0.0, 1.0, false, 0.0, false, false);
     }
     let owner_frame = MotionModule::frame(owner_boma);
-    MotionModule::set_frame(weapon.module_accessor,owner_frame);
+    MotionModule::set_frame(weapon.module_accessor,owner_frame,false);
     if MotionModule::is_end(weapon.module_accessor) && owner_status == *FIGHTER_STATUS_KIND_ATTACK_LW4 {
         smash_script::notify_event_msc_cmd!(weapon, Hash40::new_raw(0x199c462b5d));
     }

@@ -1,4 +1,5 @@
 use crate::imports::imports_acmd::*;
+use crate::imports::imports_agent::*;
 
 pub const DEFAULT_GENERATE_ARTICLE_ID: i32 = 0x0;
 pub static mut GENERATE_ARTICLE_ID: i32 = 0x0;
@@ -135,8 +136,9 @@ pub unsafe extern "C" fn haved_main(weapon: &mut smashline::L2CWeaponCommon) -> 
 }
 
 unsafe extern "C" fn haved_main_loop(weapon: &mut smashline::L2CWeaponCommon) -> smashline::L2CValue {
+    let owner_id = WorkModule::get_int(weapon.module_accessor, *WEAPON_INSTANCE_WORK_ID_INT_LINK_OWNER) as u32;
     let owner = sv_battle_object::module_accessor(owner_id);
-    let owner_status = StatusModule::status_kind(owner_boma);
+    let owner_status = StatusModule::status_kind(owner);
     if owner_status != *FIGHTER_STATUS_KIND_ATTACK_LW4 {
         smash_script::notify_event_msc_cmd!(weapon, Hash40::new_raw(0x199c462b5d));
     }
@@ -188,19 +190,19 @@ pub unsafe extern "C" fn ready_main(weapon: &mut smashline::L2CWeaponCommon) -> 
 unsafe extern "C" fn ready_main_status_loop(weapon: &mut smashline::L2CWeaponCommon) -> smashline::L2CValue {
     let mut despawn = false;
     let owner_id = WorkModule::get_int(weapon.module_accessor, *WEAPON_INSTANCE_WORK_ID_INT_LINK_OWNER) as u32;
-    if !sv_battle_object::is_active(owner) {
+    if !sv_battle_object::is_active(owner_id) {
         despawn = true;
     }
     else {
-        let owner = sv_battle_object::module_accessor(owner_id);
+        let owner_boma = sv_battle_object::module_accessor(owner_id);
         let owner_status = StatusModule::status_kind(owner_boma);
         if [*FIGHTER_STATUS_KIND_ATTACK_LW4_START,*FIGHTER_STATUS_KIND_DEAD].contains(&owner_status) {
             despawn = true;
         }
     }
     if despawn {
-        let eff_pos = *PostureModule::pos(fighter.module_accessor);
-        EffectModule::req(fighter.module_accessor, Hash40::new("sys_erace_smoke"), 
+        let eff_pos = *PostureModule::pos(weapon.module_accessor);
+        EffectModule::req(weapon.module_accessor, Hash40::new("sys_erace_smoke"), 
         &Vector3f{x: eff_pos.x, y: eff_pos.y+0.0, z: eff_pos.z}, &Vector3f{x: 0.0, y: 300.0, z: 0.0}, 
         1.0, 0,-1,false,0) as u32;
         smash_script::notify_event_msc_cmd!(weapon, Hash40::new_raw(0x199c462b5d));
@@ -212,7 +214,7 @@ unsafe extern "C" fn ready_main_status_loop(weapon: &mut smashline::L2CWeaponCom
             WorkModule::on_flag(weapon.module_accessor, STATUS_FLAG_FALL);
             GroundModule::correct(weapon.module_accessor, GroundCorrectKind(*GROUND_CORRECT_KIND_AIR));
 
-            KineticModule::change_kinetic(fighter.module_accessor, *WEAPON_KINETIC_TYPE_NORMAL);
+            KineticModule::change_kinetic(weapon.module_accessor, *WEAPON_KINETIC_TYPE_NORMAL);
             sv_kinetic_energy!(
                 set_speed,
                 weapon,
@@ -242,7 +244,7 @@ unsafe extern "C" fn ready_main_status_loop(weapon: &mut smashline::L2CWeaponCom
                 0.2
             );
 
-            KineticModule::enable_energy(fighter.module_accessor, *WEAPON_KINETIC_ENERGY_RESERVE_ID_ROT_NORMAL);
+            KineticModule::enable_energy(weapon.module_accessor, *WEAPON_KINETIC_ENERGY_RESERVE_ID_ROT_NORMAL);
             sv_kinetic_energy!(
                 set_speed, 
                 weapon, 
@@ -334,7 +336,7 @@ unsafe extern "C" fn onsearch(_vtable: u64, weapon: &mut smash::cpp::root::app::
     let is_searching = WorkModule::on_flag(boma,STATUS_FLAG_ENABLE_SEARCH);
     if status_kind == *WEAPON_SHIZUE_CLAYROCKET_STATUS_KIND_READY {
         if opponent_object_id != *BATTLE_OBJECT_ID_INVALID as u32 {
-            StatusModule::change_status_force(boma, *STATUS_KIND_EXPLOSION, true);
+            StatusModule::change_status_force(boma, STATUS_KIND_EXPLOSION, true);
         }
     }
 }

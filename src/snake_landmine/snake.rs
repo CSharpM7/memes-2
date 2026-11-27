@@ -169,15 +169,15 @@ unsafe extern "C" fn expression_attacklw4charge(agent: &mut L2CAgentBase) {
 
 pub unsafe extern "C" fn attacklw4_start_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     attacklw4_common_exit(fighter);
-    fighter.status_end_Attacklw4Start()
+    fighter.status_end_AttackLw4Start()
 }
 pub unsafe extern "C" fn attacklw4_hold_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     attacklw4_common_exit(fighter);
-    fighter.status_end_Attacklw4Hold()
+    fighter.status_end_AttackLw4Hold()
 }
 pub unsafe extern "C" fn attacklw4_end(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     attacklw4_common_exit(fighter);
-    fighter.status_end_Attacklw4()
+    fighter.status_end_AttackLw4()
 }
 pub unsafe extern "C" fn attacklw4_common_exit(fighter: &mut smashline::L2CFighterCommon) -> smashline::L2CValue {
     let status_interupt = fighter.global_table[STATUS_KIND].get_i32();
@@ -198,8 +198,8 @@ pub fn install() {
         .acmd("sound_attacklw4charge", sound_attacklw4charge, Priority::Default)
         .acmd("expression_attacklw4charge", expression_attacklw4charge, Priority::Default)
 
-        .status(End, *FIGHTER_STATUS_KIND_ATTACK_LW4_START, attacks4_start_end)
-        .status(End, *FIGHTER_STATUS_KIND_ATTACK_LW4_HOLD, attacks4_hold_end)
-        .status(End, *FIGHTER_STATUS_KIND_ATTACK_LW4, attacks4_end)
+        .status(End, *FIGHTER_STATUS_KIND_ATTACK_LW4_START, attacklw4_start_end)
+        .status(End, *FIGHTER_STATUS_KIND_ATTACK_LW4_HOLD, attacklw4_hold_end)
+        .status(End, *FIGHTER_STATUS_KIND_ATTACK_LW4, attacklw4_end)
     .install();
 }
